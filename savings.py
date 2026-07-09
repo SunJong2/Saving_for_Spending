@@ -48,12 +48,29 @@ def create_saving(req: SavingCreate, user_id: int = Depends(get_current_user)):
         (req.amount, goal_id)
     )
 
+    cursor.execute(
+        "SELECT current_amount, target_amount FROM goals WHERE id = ?",
+        (goal_id,)
+    )
+
+    current, target = cursor.fetchone()
+
+    if current >= target:
+        cursor.execute(
+            "UPDATE goals SET is_completed = 1, completed_at = ? WHERE id = ?",
+            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), goal_id)
+        )
+        conn.commit()
+        conn.close()
+
+        return {"message": "saving created", "goal_completed": True }
+    
     # 4. commit 시점에 위의 INSERT + UPDATE가 한꺼번에 확정된다 (트랜잭션)
     #    중간에 에러가 나서 여기 도달 못 하면 둘 다 저장 안 됨 → 데이터 안 어긋남
     conn.commit()
     conn.close()
 
-    return {"message": "saving created"}
+    return {"message": "saving created", "goal_completed": False }
 
 @router.get("/savings")
 def get_current_savings(user_id: int = Depends(get_current_user)):
