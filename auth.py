@@ -1,18 +1,23 @@
-from fastapi import APIRouter, HTTPException
+import os
+from dotenv import load_dotenv
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from database import get_connection
-from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+load_dotenv()   # .env 파일을 읽어 환경변수로 등록
 
 security = HTTPBearer()
 router = APIRouter()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = "temporary-secret-key-change-later"
+SECRET_KEY = os.getenv("SECRET_KEY")
+if SECRET_KEY is None:
+    raise RuntimeError("SECRET_KEY가 설정되지 않았습니다. .env 파일을 확인하세요")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 

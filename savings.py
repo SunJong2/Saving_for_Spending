@@ -18,6 +18,9 @@ class SavingCreate(BaseModel):
 
 @router.post("/savings")
 def create_saving(req: SavingCreate, user_id: int = Depends(get_current_user)):
+    # 0. 입력 검증
+    if req.amount <= 0:
+        raise HTTPException(status_code=400, detail="금액은 0보다 커야 합니다")
     # user_id는 토큰에서 꺼내지만, goal_id는 아래에서 DB 조회로 알아냄
     conn = get_connection()
     cursor = conn.cursor()

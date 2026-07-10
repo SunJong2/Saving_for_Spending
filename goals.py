@@ -174,6 +174,11 @@ def delete_goal(user_id: int = Depends(get_current_user)):
 
     return {"message": "goal deleted"}
 
+def days_before_deadline(deadline: str, completed_at: str) -> int:
+    deadline_d = datetime.strptime(deadline, "%Y-%m-%d").date()
+    completed_d = datetime.strptime(completed_at, "%Y-%m-%d %H:%M:%S").date()
+    return (deadline_d - completed_d).days
+
 @router.get("/goals/history")
 def get_goals_history(user_id: int = Depends(get_current_user)):
     conn = get_connection()
@@ -181,7 +186,7 @@ def get_goals_history(user_id: int = Depends(get_current_user)):
 
     # 목록 조회는 조건으로 한 번에 (특정된 하나가 아니므로 2단계 불필요)
     cursor.execute(
-        """SELECT name, target_amount, deadline, image_url, completed_at
+        """SELECT id, name, target_amount, current_amount, deadline, image_url, completed_at
         FROM goals WHERE user_id = ? AND is_completed = 1
         ORDER BY completed_at DESC""",
         (user_id,)
@@ -191,7 +196,36 @@ def get_goals_history(user_id: int = Depends(get_current_user)):
 
     # 빈 리스트 = "아직 달성한 목표 없음" — 에러 아닌 정상 응답
     return {"history": [
-        {"name": g[0], "target_amount": g[1], "deadline": g[2],
-         "image_url": g[3], "completed_at": g[4]}
+        {"id": g[0], "name": g[1], "target_amount": g[2], "current_amount": g[3],
+         "progress": round(g[3] / g[2] * 100, 1),"deadline": g[4],
+         "image_url": g[5], "completed_at": g[6],
+         "days_early": days_before_deadline(g[4], g[6])}
         for g in goals_completed
+    ]}
+
+@router.get("/goals/{goal_id}/savings")
+def get_goal_savings(goal_id: int, user_id: int = Depends(get_current_user)):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM goals WHERE id = ? AND user_id = ?",
+    (goal_id, user_id))
+    if cursor.fetchone() is None :
+        conn.close()
+        raise HTTPException(status_code=404, detail= "목표를 찾을 수 없습니다")
+    
+    cursor.execute(
+        """SELECT category, amount, memo, image_url, created_at
+           FROM savings
+           WHERE user_id = ? AND goal_id = ?
+           ORDER BY created_at DESC""",
+        (user_id, goal_id)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    return {"savings": [
+        {"category": row[0], "amount": row[1], "memo": row[2],
+         "image_url": row[3], "created_at": row[4]}
+        for row in rows
     ]}
