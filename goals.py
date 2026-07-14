@@ -215,7 +215,7 @@ def get_goal_savings(goal_id: int, user_id: int = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail= "목표를 찾을 수 없습니다")
     
     cursor.execute(
-        """SELECT category, amount, memo, image_url, created_at
+        """SELECT id, category, amount, memo, image_url, created_at
            FROM savings
            WHERE user_id = ? AND goal_id = ?
            ORDER BY created_at DESC""",
@@ -225,7 +225,7 @@ def get_goal_savings(goal_id: int, user_id: int = Depends(get_current_user)):
     conn.close()
 
     return {"savings": [
-        {"category": row[0], "amount": row[1], "memo": row[2],
-         "image_url": row[3], "created_at": row[4]}
+        {"id": row[0], "category": row[1], "amount": row[2], "memo": row[3],
+         "image_url": row[4], "created_at": row[5]}
         for row in rows
     ]}

@@ -96,7 +96,7 @@ def get_current_savings(user_id: int = Depends(get_current_user)):
     # 2. 이 사용자의 + 이 목표의 기록만, 최신순으로
     #    (goal_id 조건 덕분에 과거 목표의 기록은 섞이지 않음)
     cursor.execute(
-        """SELECT category, amount, memo, image_url, created_at
+        """SELECT id, category, amount, memo, image_url, created_at
            FROM savings
            WHERE user_id = ? AND goal_id = ?
            ORDER BY created_at DESC""",
@@ -108,7 +108,39 @@ def get_current_savings(user_id: int = Depends(get_current_user)):
     # 3. 튜플 리스트 → 딕셔너리 리스트로 변환해 응답
     #    기록이 없으면 빈 리스트 → 에러 아님 (프론트가 "기록 없음" 화면 처리)
     return {"savings": [
-        {"category": row[0], "amount": row[1], "memo": row[2],
-         "image_url": row[3], "created_at": row[4]}
+        {"id": row[0], "category": row[1], "amount": row[2], "memo": row[3],
+         "image_url": row[4], "created_at": row[5]}
         for row in rows
     ]}
+
+@router.delete("/savings/{saving_id}")
+def delete_saving(saving_id: int, user_id: int = Depends(get_current_user)):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT goal_id, amount FROM savings WHERE id = ? AND user_id = ?",
+    (saving_id, user_id))
+    saving = cursor.fetchone()
+    if saving is None:
+        conn.close()
+        raise HTTPException(status_code= 404, detail= "지울 수 있는 기록이 없습니다")
+    
+    goal_id, amount = saving
+    cursor.execute("SELECT is_completed FROM goals WHERE id = ?", (goal_id,))
+    goal = cursor.fetchone()
+
+    if goal[0] == 1:
+        conn.close()
+        raise HTTPException(status_code=400, detail="완료된 목표의 기록은 삭제할 수 없습니다")
+    
+    cursor.execute("DELETE FROM savings WHERE id = ?", (saving_id,))
+    cursor.execute("UPDATE goals SET current_amount = current_amount - ? WHERE id = ?",
+    (amount, goal_id))
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "saving deleted"}
+
+
+
