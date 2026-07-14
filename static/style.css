@@ -1,0 +1,67 @@
+/* ===== 디자인 시스템 ===== */
+:root {
+    --bg: #FFFFFF;
+    --bg-section: #F7F8FA;
+    --text: #191F28;
+    --text-sub: #8B95A1;
+    --gradient: linear-gradient(135deg, #7C4DFF, #448AFF);
+    --radius: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* 모바일 우선: 콘텐츠를 폰 너비로 제한 */
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== 공용 컴포넌트 ===== */
+.title-lg {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.input {
+    width: 100%;
+    padding: 16px;
+    border: 1.5px solid #E5E8EB;
+    border-radius: var(--radius);
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.input:focus { border-color: #7C4DFF; }
+
+.btn-primary {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--gradient);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-primary:active { opacity: 0.85; }
+
+.text-sub { color: var(--text-sub); font-size: 14px; }
+.link { color: #7C4DFF; text-decoration: none; font-weight: 600; }
+
+.error-msg {
+    color: #F04452;
+    font-size: 14px;
+    min-height: 20px;
+}

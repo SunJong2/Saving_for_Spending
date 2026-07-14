@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div style="margin-top: 80px; margin-bottom: 48px;">
+            <h1 class="title-lg">모으는 재미,<br>쓰는 기쁨 💸</h1>
+            <p class="text-sub" style="margin-top: 12px;">갖고 싶은 것을 향해 아껴보세요</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <input class="input" type="email" id="email" placeholder="이메일">
+            <input class="input" type="password" id="password" placeholder="비밀번호">
+            <p class="error-msg" id="errorMsg"></p>
+            <button class="btn-primary" onclick="login()">로그인</button>
+        </div>
+
+        <p class="text-sub" style="text-align: center; margin-top: 24px;">
+            아직 계정이 없나요? <a class="link" href="signup.html">가입하기</a>
+        </p>
+    </div>
+
+    <script>
+        async function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const response = await fetch("/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("token", data.access_token);
+                location.href = "index.html";
+            } else {
+                document.getElementById("errorMsg").textContent = "이메일 또는 비밀번호를 확인해주세요";
+            }
+        }
+    </script>
+</body>
+</html>
