@@ -30,6 +30,10 @@ class SignupRequest(BaseModel):
 
 @router.post("/signup")
 def signup(req: SignupRequest):
+    # 0. 입력 검증
+    if not req.email.strip() or not req.password.strip() or not req.nickname.strip():
+        raise HTTPException(status_code=400, detail="모든 항목을 입력해주세요")
+    
     conn = get_connection()
     cursor = conn.cursor()
 

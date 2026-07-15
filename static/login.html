@@ -2,20 +2,25 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <!-- viewport: 모바일에서 화면 폭에 맞게 렌더링 (모바일 우선 앱의 필수 태그) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>로그인</title>
+    <!-- 공용 디자인 시스템 (모든 페이지가 이 파일 하나를 공유) -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
+        <!-- 타이틀 영역 -->
         <div style="margin-top: 80px; margin-bottom: 48px;">
             <h1 class="title-lg">모으는 재미,<br>쓰는 기쁨 💸</h1>
             <p class="text-sub" style="margin-top: 12px;">갖고 싶은 것을 향해 아껴보세요</p>
         </div>
 
+        <!-- 입력 폼 영역 (form 태그 대신 div: 버튼의 자동 submit 동작 방지) -->
         <div style="display: flex; flex-direction: column; gap: 12px;">
             <input class="input" type="email" id="email" placeholder="이메일">
             <input class="input" type="password" id="password" placeholder="비밀번호">
+            <!-- 에러 문구 자리 (평소엔 비어 있고, JS가 상황별 문구를 채움) -->
             <p class="error-msg" id="errorMsg"></p>
             <button class="btn-primary" onclick="login()">로그인</button>
         </div>
@@ -27,20 +32,36 @@
 
     <script>
         async function login() {
+            // 입력창에서 현재 값 읽기
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
+            // 0. 프론트 입력 검증 — 서버에 보내기 전에 차단 (프론트판 "문지기는 문 앞에")
+            //    !email : 빈 문자열은 JS에서 거짓으로 평가됨
+            if (!email) {
+                document.getElementById("errorMsg").textContent = "이메일을 입력해주세요";
+                return;   // 함수 종료 → fetch까지 가지 않음
+            }
+            if (!password) {
+                document.getElementById("errorMsg").textContent = "비밀번호를 입력해주세요";
+                return;
+            }
+
+            // 1. 백엔드에 로그인 요청 (파이썬 requests.post와 같은 역할)
             const response = await fetch("/login", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password })
+                headers: { "Content-Type": "application/json" },  // "JSON 보냅니다" 선언
+                body: JSON.stringify({ email, password })          // JS 객체 → JSON 문자열
             });
 
+            // 2. 응답 분기 (response.ok = 상태 코드가 200번대면 true)
             if (response.ok) {
                 const data = await response.json();
+                // 토큰을 브라우저 저장소에 보관 → 이후 페이지들이 API 호출 시 꺼내 씀
                 localStorage.setItem("token", data.access_token);
-                location.href = "index.html";
+                location.href = "index.html";   // 홈으로 이동
             } else {
+                // 401 등 실패 — 문구는 프론트가 결정 (백엔드는 데이터, 프론트는 표현)
                 document.getElementById("errorMsg").textContent = "이메일 또는 비밀번호를 확인해주세요";
             }
         }

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div style="margin-top: 80px; margin-bottom: 48px;">
+            <h1 class="title-lg">반가워요!<br>3초면 시작할 수 있어요</h1>
+            <p class="text-sub">아끼는 재미를 만들러 가볼까요?</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <input class="input" type="email" id="email" placeholder="이메일">
+            <input class="input" type="password" id="password" placeholder="비밀번호">
+            <input class="input" type="password" id="passwordConfirm" placeholder="비밀번호 확인">
+            <input class="input" type="text" id="nickname" placeholder="닉네임">
+            <p class="error-msg" id="errorMsg"></p>
+            <button class="btn-primary" onclick="signup()">회원가입</button>
+        </div>
+
+        <p class="text-sub" style="text-align: center; margin-top: 24px;">
+            이미 계정이 있나요? <a class="link" href="login.html">로그인</a>
+        </p>
+    </div>
+
+    <script>
+        async function signup() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const passwordConfirm = document.getElementById("passwordConfirm").value;
+            const nickname = document.getElementById("nickname").value;
+
+            // 0. 프론트 입력 검증 — 순서: 빈 값 → 형식 → 일치 여부
+            if (!email) {
+                document.getElementById("errorMsg").textContent = "이메일을 입력해주세요";
+                return;
+            }
+            // includes("@"): 상식선의 이메일 형식 검사 (완벽한 검증은 향후 과제)
+            if (!email.includes("@")) {
+                document.getElementById("errorMsg").textContent = "올바른 형식의 이메일을 입력해주세요";
+                return;
+            }
+            if (!password) {
+                document.getElementById("errorMsg").textContent = "비밀번호를 입력해주세요";
+                return;
+            }
+            if (!nickname) {
+                document.getElementById("errorMsg").textContent = "닉네임을 입력해주세요";
+                return;
+            }
+            // 비밀번호 재확인 — 오타 방지용 입력 편의 검증 (그래서 프론트 전용, 서버로 안 보냄)
+            // !== : 엄격 비교 (JS에서는 항상 ===/!== 사용)
+            if (password !== passwordConfirm) {
+                document.getElementById("errorMsg").textContent = "비밀번호가 일치하지 않습니다";
+                return;
+            }
+
+            // 1. 백엔드에 가입 요청 (passwordConfirm은 보내지 않음 — 서버는 비밀번호 하나만 필요)
+            const response = await fetch("/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, nickname })
+            });
+
+            // 2. 가입 성공 → 로그인 페이지로 (signup은 토큰을 주지 않으므로 로그인 유도)
+            if (response.ok) {
+                location.href = "login.html";
+            } else {
+                // 프론트 검증이 빈 값을 이미 거르므로, 여기 도달하는 400은 사실상 중복 이메일
+                document.getElementById("errorMsg").textContent = "이미 가입된 이메일입니다";
+            }
+        }
+    </script>
+</body>
+</html>
