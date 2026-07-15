@@ -41,7 +41,7 @@ def signup(req: SignupRequest):
     cursor.execute("SELECT id FROM users WHERE email = ?", (req.email,))
     if cursor.fetchone() is not None:
         conn.close()
-        raise HTTPException(status_code=400, detail="이미 가입된 이메일입니다")
+        raise HTTPException(status_code=409, detail="이미 가입된 이메일입니다")
 
     # 비밀번호 해시 후 저장
     password_hash = pwd_context.hash(req.password)

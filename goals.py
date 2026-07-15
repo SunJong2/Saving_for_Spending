@@ -31,12 +31,12 @@ def create_goal(req: GoalCreate, user_id: int = Depends(get_current_user)):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # 1. 미완료 목표가 있는지 검사 → 있으면 400 에러
+    # 1. 미완료 목표가 있는지 검사 → 있으면 409 에러
     #    (힌트: conn.close() 잊지 말기)
     cursor.execute("SELECT id FROM goals WHERE user_id = ? AND is_completed = 0", (user_id,))
     if cursor.fetchone() is not None:
         conn.close()
-        raise HTTPException(status_code= 400, detail= "이미 등록된 미완료 목표가 있습니다")
+        raise HTTPException(status_code= 409, detail= "이미 등록된 미완료 목표가 있습니다")
 
     # 2. INSERT (created_at은 datetime.now()... 패턴, 2주차 signup 참고)
     cursor.execute(

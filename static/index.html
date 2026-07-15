@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 목표가 있을 때 보여줄 영역 (기본 숨김) -->
+        <div id="goalSection" style="display: none;">
+            <p class="text-sub" id="dday"></p>
+            <h1 class="title-lg" id="goalName"></h1>
+
+            <!-- 저금통 자리 (다음 세션에서 꾸밈) -->
+            <div style="background: var(--bg-section); border-radius: var(--radius);
+                        padding: 40px; text-align: center; margin: 24px 0;">
+                <div style="font-size: 64px;" id="piggy">🐷</div>
+                <h2 id="amountText" style="margin-top: 12px;"></h2>
+                <p class="text-sub" id="progressText"></p>
+            </div>
+
+            <button class="btn-primary" onclick="location.href='add-saving.html'">
+                절약 기록하기
+            </button>
+
+            <h2 style="font-size: 18px; margin: 32px 0 12px;">최근 기록</h2>
+            <div id="savingsList"></div>
+        </div>
+
+        <!-- 목표가 없을 때 보여줄 영역 (기본 숨김) -->
+        <div id="noGoalSection" style="display: none; text-align: center; margin-top: 120px;">
+            <div style="font-size: 64px;">🎯</div>
+            <h1 class="title-lg" style="margin-top: 16px;" id="noGoalTitle">갖고 싶은 게 있나요?</h1>
+            <p class="text-sub" style="margin: 12px 0 32px;" id="noGoalSub">목표를 세우고 아껴서 가져보세요</p>
+            <button class="btn-primary" onclick="location.href='add-goal.html'" id="noGoalBtn">
+                첫 목표 만들기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+
+        // 진입 가드 1차: 토큰이 아예 없으면 바로 추방
+        if (!token) {
+            location.href = "login.html";
+        }
+
+        async function loadGoal() {
+            const response = await fetch("/goals/current", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            // 진입 가드 2차: 토큰이 있어도 무효(만료/위조)면 추방
+            if (response.status === 401) {
+                localStorage.removeItem("token");   // 죽은 토큰 청소
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            if (response.status === 404) {
+                // 진행 중 목표 없음 → 목표 만들기 화면 표시
+                // 달성 이력이 있으면 "첫 목표" 문구를 덮어씀
+                const historyRes = await fetch("/goals/history", {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+                const historyData = await historyRes.json();
+
+                if (historyData.history.length > 0) {
+                    document.getElementById("noGoalTitle").textContent = "다음 목표를 세워볼까요?";
+                    document.getElementById("noGoalSub").textContent = "지난 목표를 해냈으니, 새 도전도 할 수 있어요";
+                    document.getElementById("noGoalBtn").textContent = "새 목표 만들기";
+                }
+
+                document.getElementById("noGoalSection").style.display = "block";
+                return;
+            }
+
+            // 목표 있음 → 데이터 채우고 표시
+            const goal = await response.json();
+            document.getElementById("dday").textContent = "D-" + goal.d_day;
+            document.getElementById("goalName").textContent = goal.name;
+            document.getElementById("amountText").textContent =
+                goal.current_amount.toLocaleString() + "원 / " + goal.target_amount.toLocaleString() + "원";
+            document.getElementById("progressText").textContent = goal.progress + "% 달성";
+            document.getElementById("goalSection").style.display = "block";
+
+            loadSavings();
+        }
+
+        async function loadSavings() {
+            const response = await fetch("/savings", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            const data = await response.json();
+
+            document.getElementById("savingsList").innerHTML = data.savings
+                .map(s => `
+                    <div style="background: var(--bg-section); border-radius: 12px;
+                                padding: 14px 16px; margin-bottom: 8px;
+                                display: flex; justify-content: space-between;">
+                        <span>${s.category}</span>
+                        <span style="font-weight: 600;">+${s.amount.toLocaleString()}원</span>
+                    </div>
+                `)
+                .join("");
+        }
+
+        loadGoal();   // 페이지 열리면 즉시 실행
+    </script>
+</body>
+</html>

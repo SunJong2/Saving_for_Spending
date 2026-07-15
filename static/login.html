@@ -65,6 +65,18 @@
                 document.getElementById("errorMsg").textContent = "이메일 또는 비밀번호를 확인해주세요";
             }
         }
+        document.getElementById("password").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") login();
+        });
+        document.getElementById("email").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") login();
+        });
+
+        // 페이지 열릴 때: 세션 만료로 튕겨온 경우 안내 문구 표시
+        const params = new URLSearchParams(location.search);
+        if (params.get("expired")) {
+            document.getElementById("errorMsg").textContent = "로그인이 만료되었어요. 다시 로그인해주세요";
+        }
     </script>
 </body>
 </html>

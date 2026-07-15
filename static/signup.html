@@ -74,6 +74,9 @@
                 document.getElementById("errorMsg").textContent = "이미 가입된 이메일입니다";
             }
         }
+        document.getElementById("nickname").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") signup();
+        });
     </script>
 </body>
 </html>

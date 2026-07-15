@@ -89,7 +89,7 @@ def get_current_savings(user_id: int = Depends(get_current_user)):
 
     if goal is None:
         conn.close()
-        raise HTTPException(status_code=404, detail="기록할 목표가 없습니다")
+        raise HTTPException(status_code=404, detail="진행 중인 목표가 없습니다")
 
     goal_id = goal[0]
 
