@@ -25,6 +25,16 @@
         </div>
     </div>
 
+    <!-- 축하 모달 (평소 숨김) -->
+    <div class="modal-overlay" id="congratsModal">
+        <div class="modal-card">
+            <div style="font-size: 64px;">🎉</div>
+            <h1 class="title-lg" style="margin: 16px 0 8px;">목표 달성!</h1>
+            <p class="text-sub" style="margin-bottom: 28px;">해냈어요. 갖고 싶던 걸 가져보세요 🎁</p>
+            <button class="btn-primary" onclick="location.href='index.html'">홈으로</button>
+        </div>
+    </div>
+
     <script>
         const token = localStorage.getItem("token");
 
@@ -78,8 +88,9 @@
             if (response.ok) {
                 const data = await response.json();
                 if (data.goal_completed) {
-                    // TODO: 다음 세션에서 축하 모달로 교체
-                    alert("🎉 축하해요! 목표를 달성했어요!");   // 임시로 alert
+                    // 모달 띄우기 (홈으로 이동하지 않고 여기서 멈춤)
+                    document.getElementById("congratsModal").style.display = "flex";
+                    return;
                 }
                 location.href = "index.html";
             } else {

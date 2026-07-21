@@ -15,10 +15,16 @@
 
             <!-- 저금통 자리 (다음 세션에서 꾸밈) -->
             <div style="background: var(--bg-section); border-radius: var(--radius);
-                        padding: 40px; text-align: center; margin: 24px 0;">
-                <div style="font-size: 64px;" id="piggy">🐷</div>
-                <h2 id="amountText" style="margin-top: 12px;"></h2>
-                <p class="text-sub" id="progressText"></p>
+                        padding: 32px 24px; text-align: center; margin: 24px 0;">
+                <div style="font-size: 56px;">🐷</div>
+
+                <!-- 진행률 바 -->
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <p id="progressText" class="text-sub" style="margin-bottom: 4px;"></p>
+                <h2 id="amountText"></h2>
             </div>
 
             <button class="btn-primary" onclick="location.href='add-saving.html'">
@@ -85,8 +91,14 @@
             document.getElementById("amountText").textContent =
                 goal.current_amount.toLocaleString() + "원 / " + goal.target_amount.toLocaleString() + "원";
             document.getElementById("progressText").textContent = goal.progress + "% 달성";
-            document.getElementById("goalSection").style.display = "block";
 
+            // 진행률 바 채우기 — 100 넘어도 바는 100까지만 (숫자는 위에서 실제값 표시)
+            const fillWidth = Math.min(goal.progress, 100);
+            setTimeout(() => {
+                document.getElementById("progressFill").style.width = fillWidth + "%";
+            }, 100);    // 0%가 먼저 그려진 뒤 실제값으로 → transition 발동
+
+            document.getElementById("goalSection").style.display = "block";
             loadSavings();
         }
 
