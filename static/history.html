@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>히스토리</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 히스토리가 있을 때 보여줄 영역 (기본 숨김) -->
+        <div id="historySection" style="display: none;">
+            <div style="margin-top: 80px; margin-bottom: 48px;">
+                <h1 class="title-lg">지금까지<br>해낸 것들 🏆</h1>
+            </div>
+            <h2 style="font-size: 18px; margin: 32px 0 12px;">달성 기록</h2>
+            <div id="historyList"></div>
+        </div>
+
+        <!-- 히스토리가 없을 때 보여줄 영역 (기본 숨김) -->
+        <div id="noHistorySection" style="display: none; text-align: center; margin-top: 120px;">
+            <div style="font-size: 64px;">🎯</div>
+            <h1 class="title-lg" style="margin-top: 16px;" id="noGoalTitle">아직 달성한 목표가 없어요</h1>
+            <p class="text-sub" style="margin: 12px 0 32px;" id="noGoalSub">목표를 세우고 아껴서 가져보세요</p>
+            <button class="btn-primary" onclick="location.href='add-goal.html'" id="noGoalBtn">
+                첫 목표 만들기
+            </button>
+        </div>
+    </div>
+
+    <!-- 목표별 절약 기록 모달 -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-card" style="text-align: left; max-height: 70vh; overflow-y: auto;">
+            <h2 id="modalGoalName" style="font-size: 20px; margin-bottom: 4px;"></h2>
+            <p class="text-sub" style="font-size: 13px; margin-bottom: 20px;">이 목표를 위해 아낀 기록이에요</p>
+
+            <div id="modalSavingsList"></div>
+
+            <button class="btn-primary" style="margin-top: 20px;" onclick="closeDetail()">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+
+        // 진입 가드 1차: 토큰이 아예 없으면 바로 추방
+        if (!token) {
+            location.href = "login.html";
+        }
+
+        async function loadHistory() {
+            const historyRes = await fetch("/goals/history", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            // 진입 가드 2차: 토큰이 있어도 무효(만료/위조)면 추방
+            if (historyRes.status === 401) {
+                localStorage.removeItem("token");   // 죽은 토큰 청소
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            const historyData = await historyRes.json();
+            if (historyData.history.length === 0) {
+                document.getElementById("noHistorySection").style.display = "block";
+                return;
+            }
+            document.getElementById("historySection").style.display = "block";
+            
+            document.getElementById("historyList").innerHTML = historyData.history
+                .map(h => `
+                    <div onclick="openGoalDetail(${h.id}, '${h.name}')"
+                        style="background: var(--bg-section); border-radius: var(--radius);
+                                padding: 20px; margin-bottom: 12px;">
+
+                        <!-- 1줄: 목표 이름 + 달성률 -->
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <span style="font-size: 17px; font-weight: 700;">${h.name}</span>
+                            <span style="font-size: 14px; font-weight: 700; color: #7C4DFF;">${h.progress}%</span>
+                        </div>
+
+                        <!-- 2줄: 금액 -->
+                        <p style="margin-top: 6px; font-size: 15px;">
+                            ${h.current_amount.toLocaleString()}원
+                            <span class="text-sub">/ ${h.target_amount.toLocaleString()}원</span>
+                        </p>
+
+                        <!-- 3줄: 달성 정보 -->
+                        <p class="text-sub" style="margin-top: 10px; font-size: 13px;">
+                            ${h.completed_at.split(" ")[0]} 달성 ·
+                            ${h.days_early > 0 ? `${h.days_early}일 빠르게 ⚡`
+                                : h.days_early === 0 ? "마감일에 딱 맞춰"
+                                : "끝까지 해냈어요"}
+                        </p>
+                    </div>
+                    
+                `)
+                .join("");        
+            
+        }
+
+        async function openGoalDetail(goalId, goalName) {
+            // 모달 제목 설정
+            document.getElementById("modalGoalName").textContent = goalName;
+
+            // 이 목표의 절약 기록 가져오기
+            const res = await fetch(`/goals/${goalId}/savings`, {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (res.status === 401) {
+                localStorage.removeItem("token");
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            const data = await res.json();
+
+            // 기록 목록 렌더링 (없으면 안내)
+            if (data.savings.length === 0) {
+                document.getElementById("modalSavingsList").innerHTML =
+                    `<p class="text-sub" style="text-align:center; padding: 20px 0;">기록이 없어요</p>`;
+            } else {
+                document.getElementById("modalSavingsList").innerHTML = data.savings
+                    .map(s => `
+                        <div style="display: flex; justify-content: space-between;
+                                    padding: 12px 0; border-bottom: 1px solid #F1F3F5;">
+                            <div>
+                                <div style="font-size: 15px;">${s.category}</div>
+                                ${s.memo ? `<div class="text-sub" style="font-size: 13px; margin-top: 2px;">${s.memo}</div>` : ""}
+                            </div>
+                            <span style="font-weight: 600; white-space: nowrap;">+${s.amount.toLocaleString()}원</span>
+                        </div>
+                    `)
+                    .join("");
+            }
+
+            // 모달 열기
+            document.getElementById("detailModal").style.display = "flex";
+        }
+
+        function closeDetail() {
+            document.getElementById("detailModal").style.display = "none";
+        }
+
+        loadHistory();   // 페이지 열리면 즉시 실행
+    </script>
+</body>
+</html>
