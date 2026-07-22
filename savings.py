@@ -66,7 +66,8 @@ def create_saving(req: SavingCreate, user_id: int = Depends(get_current_user)):
         conn.commit()
         conn.close()
 
-        return {"message": "saving created", "goal_completed": True }
+        progress = round(current / target * 100, 1)
+        return {"message": "saving created", "goal_completed": True, "progress": progress}
     
     # 4. commit 시점에 위의 INSERT + UPDATE가 한꺼번에 확정된다 (트랜잭션)
     #    중간에 에러가 나서 여기 도달 못 하면 둘 다 저장 안 됨 → 데이터 안 어긋남

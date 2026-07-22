@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>홈</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <!-- 목표가 있을 때 보여줄 영역 (기본 숨김) -->
@@ -31,6 +33,12 @@
                 절약 기록하기
             </button>
 
+            <!-- 보조 버튼 두 개 -->
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button class="btn-sub" onclick="location.href='edit-goal.html'">목표 수정</button>
+                <button class="btn-sub" onclick="openDeleteModal()">목표 삭제</button>
+            </div>
+
             <h2 style="font-size: 18px; margin: 32px 0 12px;">최근 기록</h2>
             <div id="savingsList"></div>
         </div>
@@ -43,6 +51,54 @@
             <button class="btn-primary" onclick="location.href='add-goal.html'" id="noGoalBtn">
                 첫 목표 만들기
             </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-card">
+            <div style="font-size: 48px;">🗑️</div>
+            <h2 style="font-size: 20px; margin: 16px 0 8px;">목표를 삭제할까요?</h2>
+            <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
+                지금까지 기록한 절약 내역도 함께 사라져요
+            </p>
+            <button class="btn-danger" onclick="deleteGoal()">삭제하기</button>
+            <button class="btn-sub" style="width: 100%; margin-top: 8px;" onclick="closeDeleteModal()">
+                취소
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="savingModal">
+        <div class="modal-card" style="text-align: left;">
+            <!-- 기본 화면 -->
+            <div id="savingDetailView">
+                <p class="text-sub" style="font-size: 13px;" id="savingDate"></p>
+                <h2 style="font-size: 24px; margin: 8px 0 12px;" id="savingCategory"></h2>
+                <p style="font-size: 32px; font-weight: 700; color: #7C4DFF; margin-bottom: 4px;" id="savingAmount"></p>
+
+                <div id="savingMemoBox" style="display: none; background: var(--bg-section);
+                        border-radius: 14px; padding: 16px; margin-top: 20px;">
+                    <p style="font-size: 14px; line-height: 1.6; color: var(--text-sub);" id="savingMemo"></p>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 32px;">
+                    <button class="btn-sub" onclick="closeSavingModal()">닫기</button>
+                    <button class="btn-sub" style="color: #F04452;" onclick="showDeleteConfirm()">삭제</button>
+                </div>
+            </div>
+
+            <!-- 삭제 확인 화면 (기본 숨김) -->
+            <div id="savingDeleteView" style="display: none; text-align: center;">
+                <div style="font-size: 48px;">🗑️</div>
+                <h2 style="font-size: 20px; margin: 16px 0 8px;">이 기록을 삭제할까요?</h2>
+                <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
+                    삭제하면 되돌릴 수 없어요
+                </p>
+                <button class="btn-danger" onclick="deleteSaving()">삭제하기</button>
+                <button class="btn-sub" style="width: 100%; margin-top: 8px;" onclick="hideDeleteConfirm()">
+                    취소
+                </button>
+            </div>
         </div>
     </div>
 
@@ -110,7 +166,8 @@
 
             document.getElementById("savingsList").innerHTML = data.savings
                 .map(s => `
-                    <div style="background: var(--bg-section); border-radius: 12px;
+                    <div onclick='openSavingDetail(${JSON.stringify(s)})'
+                        style="background: var(--bg-section); border-radius: 12px;
                                 padding: 14px 16px; margin-bottom: 8px;
                                 display: flex; justify-content: space-between;">
                         <span>${s.category}</span>
@@ -119,8 +176,85 @@
                 `)
                 .join("");
         }
+        function openDeleteModal() {
+            document.getElementById("deleteModal").style.display = "flex";
+        }
 
+        function closeDeleteModal() {
+            document.getElementById("deleteModal").style.display = "none";
+        }
+
+        async function deleteGoal() {
+            const res = await fetch("/goals/current", {
+                method: "DELETE",
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (res.status === 401) {
+                localStorage.removeItem("token");
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            if (res.ok) {
+                location.reload();   // 홈 새로고침 → 목표가 없으니 "목표 만들기" 화면으로
+            }
+        }
+
+        let selectedSavingId = null;   // 어느 기록을 삭제할지 기억
+
+        function openSavingDetail(saving) {
+            selectedSavingId = saving.id;
+
+            document.getElementById("savingDate").textContent = saving.created_at;
+            document.getElementById("savingCategory").textContent = saving.category;
+            document.getElementById("savingAmount").textContent = "+" + saving.amount.toLocaleString() + "원";
+
+            // 메모가 있을 때만 메모 박스 표시
+            const memoBox = document.getElementById("savingMemoBox");
+            if (saving.memo) {
+                document.getElementById("savingMemo").textContent = saving.memo;
+                memoBox.style.display = "block";
+            } else {
+                memoBox.style.display = "none";
+            }
+
+            document.getElementById("savingModal").style.display = "flex";
+        }
+
+        function closeSavingModal() {
+            document.getElementById("savingModal").style.display = "none";
+            hideDeleteConfirm();   // 다음에 열 때를 위해 상세 뷰로 되돌림
+        }
+
+        async function deleteSaving() {
+            const res = await fetch(`/savings/${selectedSavingId}`, {
+                method: "DELETE",
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (res.status === 401) {
+                localStorage.removeItem("token");
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            if (res.ok) {
+                location.reload();   // 목록 + 진행률 바 전부 최신화
+            }
+        }
+
+        function showDeleteConfirm() {
+            document.getElementById("savingDetailView").style.display = "none";
+            document.getElementById("savingDeleteView").style.display = "block";
+        }
+
+        function hideDeleteConfirm() {
+            document.getElementById("savingDeleteView").style.display = "none";
+            document.getElementById("savingDetailView").style.display = "block";
+        }
         loadGoal();   // 페이지 열리면 즉시 실행
     </script>
 </body>
+
 </html>

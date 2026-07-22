@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>목표수정</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 타이틀 영역 -->
+        <div style="margin-top: 80px; margin-bottom: 48px;">
+            <h1 class="title-lg">목표를<br>수정할까요?</h1>
+            <p class="text-sub" style="margin-top: 12px;">목표를 정하면 저금통이 시작돼요</p>
+        </div>
+
+        <!-- 입력 폼 영역 (form 태그 대신 div: 버튼의 자동 submit 동작 방지) -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <input class="input" type="text" id="name" placeholder="목표 이름">
+            <input class="input" type="text" id="targetAmount" placeholder="목표 금액" inputmode="numeric">
+            <input class="input" type="date" id="deadline" placeholder="마감일">
+            <!-- 에러 문구 자리 (평소엔 비어 있고, JS가 상황별 문구를 채움) -->
+            <p class="error-msg" id="errorMsg"></p>
+            <button class="btn-primary" onclick="edit_goal()">목표 수정</button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+
+        // 진입 가드 1차: 토큰이 아예 없으면 바로 추방
+        if (!token) {
+            location.href = "login.html";
+        }
+        async function loadCurrentGoal() {
+            const res = await fetch("/goals/current", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            if (!res.ok) {
+                location.href = "index.html";   // 목표 없으면 수정할 것도 없음
+                return;
+            }
+            const goal = await res.json();
+
+            document.getElementById("name").value = goal.name;
+            document.getElementById("targetAmount").value = goal.target_amount.toLocaleString();
+            document.getElementById("deadline").value = goal.deadline;
+        }
+        loadCurrentGoal();
+        
+        async function edit_goal() {
+            
+            // 입력창에서 현재 값 읽기
+            const nameInput = document.getElementById("name").value.trim();
+            const amountInput = document.getElementById("targetAmount").value.replace(/,/g, "");
+            const deadlineInput = document.getElementById("deadline").value;
+
+            // 셋 다 비었으면 보낼 이유가 없음
+            if (!nameInput && !amountInput && !deadlineInput) {
+                document.getElementById("errorMsg").textContent = "수정할 내용을 입력해주세요";
+                return;
+            }
+            
+            const body = {
+                name: nameInput || null,
+                target_amount: amountInput ? parseInt(amountInput) : null,
+                deadline: deadlineInput || null
+            };
+
+            const response = await fetch("/goals/current", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem("token");   // 죽은 토큰 청소
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            if (response.ok) {
+                location.href = "index.html";
+            } else {
+                const data = await response.json();
+                document.getElementById("errorMsg").textContent = data.detail;
+            }
+
+        }
+        // 금액 입력 시 실시간 콤마 표시
+        document.getElementById("targetAmount").addEventListener("input", (e) => {
+            // 숫자만 남기고 (콤마·문자 제거) → 다시 콤마 찍기
+            let digits = e.target.value.replace(/[^0-9]/g, "");
+            e.target.value = digits ? parseInt(digits).toLocaleString() : "";
+        });
+        document.getElementById("name").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") edit_goal();
+        });
+        document.getElementById("targetAmount").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") edit_goal();
+        });
+        document.getElementById("deadline").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") edit_goal();
+        });
+
+    </script>
+</body>
+</html>

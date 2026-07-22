@@ -83,6 +83,7 @@ def get_current_goal(user_id: int = Depends(get_current_user)):
 
 class GoalUpdate(BaseModel):
     name: str | None = None
+    target_amount: int | None = None
     deadline: str | None = None
     image_url: str | None = None
 
@@ -97,13 +98,16 @@ def update_goal(req: GoalUpdate, user_id: int = Depends(get_current_user)):
             raise HTTPException(status_code=400, detail="날짜 형식이 올바르지 않습니다 (YYYY-MM-DD)")
         if deadline_date <= datetime.now():
             raise HTTPException(status_code=400, detail="마감일은 오늘 이후여야 합니다")
-
+        
+    if req.target_amount is not None and req.target_amount <= 0:
+        raise HTTPException(status_code=400, detail="금액 설정이 올바르지 않습니다")
+    
     conn = get_connection()
     cursor = conn.cursor()
 
     # 1. 수정 대상 = 이 사용자의 진행 중인 목표 (검사 먼저, goal[0] 사용은 그 다음!)
     cursor.execute(
-        "SELECT id FROM goals WHERE user_id = ? AND is_completed = 0",
+        "SELECT id, current_amount FROM goals WHERE user_id = ? AND is_completed = 0",
         (user_id,)
     )
     goal = cursor.fetchone()
@@ -111,16 +115,25 @@ def update_goal(req: GoalUpdate, user_id: int = Depends(get_current_user)):
         conn.close()
         raise HTTPException(status_code=404, detail="진행 중인 목표가 없습니다")
 
-    goal_id = goal[0]
+    goal_id, current_amount = goal
+
+    # 이미 모은 금액보다 낮게는 설정 불가 (설정 즉시 달성되는 애매한 상태 방지)
+    if req.target_amount is not None and req.target_amount <= current_amount:
+        conn.close()
+        raise HTTPException(
+            status_code=400, 
+            detail= f"이미 {current_amount:,}원을 모았어요. 목표 금액은 그보다 커야 합니다"
+        )
 
     # 2. 부분 수정: COALESCE(?, 컬럼) → 보낸 값(None 아님)은 새 값으로,
     #    안 보낸 값(None→NULL)은 자기 자신으로 갱신 = 기존 값 유지
     cursor.execute(
         """UPDATE goals SET name = COALESCE(?, name),
+        target_amount = COALESCE(?, target_amount),
         deadline = COALESCE(?, deadline),
         image_url = COALESCE(?, image_url)
         WHERE id = ?""",
-        (req.name, req.deadline, req.image_url, goal_id)
+        (req.name, req.target_amount, req.deadline, req.image_url, goal_id)
     )
 
     # 3. 수정 후 최신 상태를 다시 읽어 응답에 담는다

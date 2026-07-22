@@ -30,7 +30,9 @@
         <div class="modal-card">
             <div style="font-size: 64px;">🎉</div>
             <h1 class="title-lg" style="margin: 16px 0 8px;">목표 달성!</h1>
-            <p class="text-sub" style="margin-bottom: 28px;">해냈어요. 갖고 싶던 걸 가져보세요 🎁</p>
+            <p style="font-size: 20px; font-weight: 700; color: #7C4DFF; margin-bottom: 8px;"
+                id="congratsProgress"></p>
+            <p class="text-sub" style="margin-bottom: 28px;" id="congratsMessage"></p>
             <button class="btn-primary" onclick="location.href='index.html'">홈으로</button>
         </div>
     </div>
@@ -88,6 +90,14 @@
             if (response.ok) {
                 const data = await response.json();
                 if (data.goal_completed) {
+                    document.getElementById("congratsProgress").textContent = data.progress + "% 달성";
+
+                    // 초과 달성이면 다른 문구
+                    document.getElementById("congratsMessage").textContent = 
+                        data.progress > 100
+                            ? "목표를 넘어섰어요! 갖고 싶던 걸 가져보세요 🎁"
+                            : "해냈어요. 갖고 싶던 걸 가져보세요 🎁";
+
                     // 모달 띄우기 (홈으로 이동하지 않고 여기서 멈춤)
                     document.getElementById("congratsModal").style.display = "flex";
                     return;
