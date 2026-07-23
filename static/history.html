@@ -7,18 +7,21 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container has-tabbar">
+        <div class="header">
+            <span style="font-weight: 700; font-size: 17px;">히스토리</span>
+        </div>
         <!-- 히스토리가 있을 때 보여줄 영역 (기본 숨김) -->
         <div id="historySection" style="display: none;">
-            <div style="margin-top: 80px; margin-bottom: 48px;">
+            <div style="margin-top: 24px; margin-bottom: 32px;">
                 <h1 class="title-lg">지금까지<br>해낸 것들 🏆</h1>
             </div>
-            <h2 style="font-size: 18px; margin: 32px 0 12px;">달성 기록</h2>
+            <h2 style="font-size: 18px; margin: 0px 0 12px;">달성 기록</h2>
             <div id="historyList"></div>
         </div>
 
         <!-- 히스토리가 없을 때 보여줄 영역 (기본 숨김) -->
-        <div id="noHistorySection" style="display: none; text-align: center; margin-top: 120px;">
+        <div id="noHistorySection" style="display: none; text-align: center; margin-top: 90px;">
             <div style="font-size: 64px;">🎯</div>
             <h1 class="title-lg" style="margin-top: 16px;" id="noGoalTitle">아직 달성한 목표가 없어요</h1>
             <p class="text-sub" style="margin: 12px 0 32px;" id="noGoalSub">목표를 세우고 아껴서 가져보세요</p>
@@ -26,6 +29,17 @@
                 첫 목표 만들기
             </button>
         </div>
+    </div>
+
+    <div class="tabbar">
+        <button class="tab" onclick="location.href='index.html'">
+            <span class="tab-icon">🏠</span>
+            홈
+        </button>
+        <button class="tab active" onclick="location.href='history.html'">
+            <span class="tab-icon">🏆</span>
+            히스토리
+        </button>
     </div>
 
     <!-- 목표별 절약 기록 모달 -->

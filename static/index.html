@@ -9,11 +9,27 @@
 </head>
 
 <body>
-    <div class="container">
+    <div class="container has tabbar">
+        <div class="header">
+            <span style="font-weight: 700; font-size: 17px;">저금통</span>
+            <button class="header-btn-text" onclick="logout()">로그아웃</button>
+        </div>
+
         <!-- 목표가 있을 때 보여줄 영역 (기본 숨김) -->
-        <div id="goalSection" style="display: none;">
+        <div id="goalSection" style="display: none; margin-top: 16px;">
             <p class="text-sub" id="dday"></p>
             <h1 class="title-lg" id="goalName"></h1>
+            <div id="overdueBanner" style="display: none; background: #FFF5F5;
+                border-radius: 12px; padding: 14px 16px; margin: 12px 0;">
+                <p style="font-size: 14px; color: #F04452; font-weight: 600;">마감일이 지났어요</p>
+                <p class="text-sub" style="font-size: 13px; margin-top: 4px;">
+                    조금 더 시간이 필요하면 마감일을 늘려보세요
+                </p>
+                <button class="btn-sub" style="width: 100%; margin-top: 12px;"
+                        onclick="location.href='edit-goal.html'">
+                    마감일 연장하기
+                </button>
+            </div>
 
             <!-- 저금통 자리 (다음 세션에서 꾸밈) -->
             <div style="background: var(--bg-section); border-radius: var(--radius);
@@ -44,7 +60,7 @@
         </div>
 
         <!-- 목표가 없을 때 보여줄 영역 (기본 숨김) -->
-        <div id="noGoalSection" style="display: none; text-align: center; margin-top: 120px;">
+        <div id="noGoalSection" style="display: none; text-align: center; margin-top: 90px;">
             <div style="font-size: 64px;">🎯</div>
             <h1 class="title-lg" style="margin-top: 16px;" id="noGoalTitle">갖고 싶은 게 있나요?</h1>
             <p class="text-sub" style="margin: 12px 0 32px;" id="noGoalSub">목표를 세우고 아껴서 가져보세요</p>
@@ -52,6 +68,17 @@
                 첫 목표 만들기
             </button>
         </div>
+    </div>
+
+    <div class="tabbar">
+        <button class="tab active" onclick="location.href='index.html'">
+            <span class="tab-icon">🏠</span>
+            홈
+        </button>
+        <button class="tab" onclick="location.href='history.html'">
+            <span class="tab-icon">🏆</span>
+            히스토리
+        </button>
     </div>
 
     <div class="modal-overlay" id="deleteModal">
@@ -142,7 +169,18 @@
 
             // 목표 있음 → 데이터 채우고 표시
             const goal = await response.json();
-            document.getElementById("dday").textContent = "D-" + goal.d_day;
+            // 수정
+            const ddayEl = document.getElementById("dday");
+            if (goal.d_day > 0) {
+                ddayEl.textContent = "D-" + goal.d_day;
+                ddayEl.style.color = "";                    // 기본 색
+            } else if (goal.d_day === 0) {
+                ddayEl.textContent = "오늘이 마감일이에요";
+                ddayEl.style.color = "#F04452";
+            } else {
+                ddayEl.textContent = `마감 ${Math.abs(goal.d_day)}일 지남`;
+                ddayEl.style.color = "#F04452";
+            }
             document.getElementById("goalName").textContent = goal.name;
             document.getElementById("amountText").textContent =
                 goal.current_amount.toLocaleString() + "원 / " + goal.target_amount.toLocaleString() + "원";
@@ -156,6 +194,10 @@
 
             document.getElementById("goalSection").style.display = "block";
             loadSavings();
+
+            if (goal.d_day < 0) {
+                document.getElementById("overdueBanner").style.display = "block";
+            }
         }
 
         async function loadSavings() {
@@ -252,6 +294,11 @@
         function hideDeleteConfirm() {
             document.getElementById("savingDeleteView").style.display = "none";
             document.getElementById("savingDetailView").style.display = "block";
+        }
+        
+        function logout() {
+            localStorage.removeItem("token");
+            location.href = "login.html";
         }
         loadGoal();   // 페이지 열리면 즉시 실행
     </script>

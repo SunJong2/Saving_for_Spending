@@ -68,7 +68,7 @@ def get_current_goal(user_id: int = Depends(get_current_user)):
 
     # 서버에서 계산해서 얹어주는 값들
     progress = round(current_amount / target_amount * 100, 1)
-    d_day = (datetime.strptime(deadline, "%Y-%m-%d") - datetime.now()).days
+    d_day = (datetime.strptime(deadline, "%Y-%m-%d").date() - datetime.now().date()).days
 
     return {
         "id": goal_id,
@@ -150,7 +150,7 @@ def update_goal(req: GoalUpdate, user_id: int = Depends(get_current_user)):
 
     # 4. 파생 값은 저장하지 않고 매번 계산
     progress = round(current_amount / target_amount * 100, 1)
-    d_day = (datetime.strptime(deadline, "%Y-%m-%d") - datetime.now()).days
+    d_day = (datetime.strptime(deadline, "%Y-%m-%d").date() - datetime.now().date()).days
 
     return {
         "id": goal_id,
