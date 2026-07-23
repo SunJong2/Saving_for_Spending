@@ -187,6 +187,37 @@ def delete_goal(user_id: int = Depends(get_current_user)):
 
     return {"message": "goal deleted"}
 
+@router.delete("/goals/{goal_id}")
+def delete_completed_goal(goal_id: int, user_id: int = Depends(get_current_user)):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT is_completed FROM goals WHERE id = ? AND user_id = ?",
+        (goal_id, user_id)
+    )
+    goal = cursor.fetchone()
+
+    if goal is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail= "목표를 찾을 수 없습니다")
+
+    # 2. 완료된 목표인지 확인 (미완료면 400 — 그건 /goals/current로 지우도록)
+    completed_flag = goal[0]
+    if completed_flag != 1:
+        conn.close()
+        raise HTTPException(status_code=400, detail="완료되지 않은 목표는 이 경로로 삭제할 수 없습니다")
+        # 사용자에게는 보이지 않을 문구, 개발자에게 왜 거부되었는지 알려주는 말(방어선의 기술적 설명)
+
+    # 3. savings 먼저 → goals 삭제 (순서!)
+    cursor.execute("DELETE FROM savings WHERE goal_id = ?", (goal_id,))
+    cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
+    # 4. commit
+    conn.commit()
+    conn.close()
+
+    return {"message": "goal deleted"}
+
 def days_before_deadline(deadline: str, completed_at: str) -> int:
     deadline_d = datetime.strptime(deadline, "%Y-%m-%d").date()
     completed_d = datetime.strptime(completed_at, "%Y-%m-%d %H:%M:%S").date()

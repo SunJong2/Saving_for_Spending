@@ -31,14 +31,33 @@
     <!-- 목표별 절약 기록 모달 -->
     <div class="modal-overlay" id="detailModal">
         <div class="modal-card" style="text-align: left; max-height: 70vh; overflow-y: auto;">
-            <h2 id="modalGoalName" style="font-size: 20px; margin-bottom: 4px;"></h2>
-            <p class="text-sub" style="font-size: 13px; margin-bottom: 20px;">이 목표를 위해 아낀 기록이에요</p>
 
-            <div id="modalSavingsList"></div>
+            <!-- 뷰 1: 목표 상세 + 기록 목록 -->
+            <div id="detailView">
+                <h2 id="modalGoalName" style="font-size: 20px; margin-bottom: 4px;"></h2>
+                <p class="text-sub" style="font-size: 13px; margin-bottom: 20px;">이 목표를 위해 아낀 기록이에요</p>
 
-            <button class="btn-primary" style="margin-top: 20px;" onclick="closeDetail()">
-                닫기
-            </button>
+                <div id="modalSavingsList"></div>
+
+                <div style="display: flex; gap: 8px; margin-top: 20px;">
+                    <button class="btn-sub" onclick="closeDetail()">닫기</button>
+                    <button class="btn-sub" style="color: #F04452;" onclick="showGoalDeleteConfirm()">삭제</button>
+                </div>
+            </div>
+
+            <!-- 뷰 2: 삭제 확인 (기본 숨김) -->
+            <div id="deleteConfirmView" style="display: none; text-align: center;">
+                <div style="font-size: 48px;">🗑️</div>
+                <h2 style="font-size: 20px; margin: 16px 0 8px;">이 목표를 삭제할까요?</h2>
+                <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
+                    달성 기록이 사라져요
+                </p>
+                <button class="btn-danger" onclick="deleteCompletedGoal()">삭제하기</button>
+                <button class="btn-sub" style="width: 100%; margin-top: 8px;" onclick="hideGoalDeleteConfirm()">
+                    취소
+                </button>
+            </div>
+
         </div>
     </div>
 
@@ -100,8 +119,11 @@
                 .join("");        
             
         }
+        let selectedGoalId = null;  // 어느 목표를 삭제할지 기억
 
         async function openGoalDetail(goalId, goalName) {
+            selectedGoalId = goalId;
+
             // 모달 제목 설정
             document.getElementById("modalGoalName").textContent = goalName;
 
@@ -141,8 +163,35 @@
             document.getElementById("detailModal").style.display = "flex";
         }
 
+        async function deleteCompletedGoal() {
+            const res = await fetch(`/goals/${selectedGoalId}`,{
+                method: "DELETE",
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (res.status === 401) {
+                localStorage.removeItem("token");
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            if (res.ok) {
+                location.reload();
+            }
+        }
+
         function closeDetail() {
             document.getElementById("detailModal").style.display = "none";
+            hideGoalDeleteConfirm();
+        }
+        function showGoalDeleteConfirm() {
+            document.getElementById("detailView").style.display = "none";
+            document.getElementById("deleteConfirmView").style.display = "block";
+        }
+
+        function hideGoalDeleteConfirm() {
+            document.getElementById("deleteConfirmView").style.display = "none";
+            document.getElementById("detailView").style.display = "block";
         }
 
         loadHistory();   // 페이지 열리면 즉시 실행
