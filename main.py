@@ -17,8 +17,4 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 def root():
-    return {"message": "SavingApp server is running"}
-
-@app.get("/")
-def root():
     return RedirectResponse(url="/static/login.html")
