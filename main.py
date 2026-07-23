@@ -4,6 +4,7 @@ from auth import router as auth_router
 from goals import router as goals_router
 from savings import router as savings_router
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 
 app = FastAPI()
 
@@ -17,3 +18,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 def root():
     return {"message": "SavingApp server is running"}
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/static/login.html")

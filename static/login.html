@@ -77,6 +77,12 @@
         if (params.get("expired")) {
             document.getElementById("errorMsg").textContent = "로그인이 만료되었어요. 다시 로그인해주세요";
         }
+
+        // 이미 유효한 토큰이 있으면 홈으로 (login.html 스크립트 맨 위)
+        if (localStorage.getItem("token")) {
+            location.href = "index.html";
+        }
+        
     </script>
 </body>
 </html>
