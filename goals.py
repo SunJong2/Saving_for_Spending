@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from datetime import datetime
-from database import get_connection
+from database import get_db
 from auth import get_current_user
 
 router = APIRouter()
@@ -28,38 +28,35 @@ def create_goal(req: GoalCreate, user_id: int = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="금액 설정이 올바르지 않습니다")
 
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    # 1. 미완료 목표가 있는지 검사 → 있으면 409 에러
-    #    (힌트: conn.close() 잊지 말기)
-    cursor.execute("SELECT id FROM goals WHERE user_id = ? AND is_completed = 0", (user_id,))
-    if cursor.fetchone() is not None:
-        conn.close()
-        raise HTTPException(status_code= 409, detail= "이미 등록된 미완료 목표가 있습니다")
+        # 1. 미완료 목표가 있는지 검사 → 있으면 409 에러
+        cursor.execute("SELECT id FROM goals WHERE user_id = %s AND is_completed = FALSE", (user_id,))
+        if cursor.fetchone() is not None:
+            raise HTTPException(status_code= 409, detail= "이미 등록된 미완료 목표가 있습니다")
 
-    # 2. INSERT (created_at은 datetime.now()... 패턴, 2주차 signup 참고)
-    cursor.execute(
-        "INSERT INTO goals (user_id, name, target_amount, deadline, image_url, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        (user_id, req.name, req.target_amount, req.deadline, req.image_url, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
-    # 3. commit, close
-    conn.commit()
-    conn.close()
+        # 2. INSERT (created_at은 datetime.now()... 패턴, 2주차 signup 참고)
+        cursor.execute(
+            "INSERT INTO goals (user_id, name, target_amount, deadline, image_url, created_at) VALUES (%s, %s, %s, %s, %s, %s)",
+            (user_id, req.name, req.target_amount, req.deadline, req.image_url, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        )
+        # 3. commit
+        conn.commit()
+
     return {"message": "goal created"}
 
 @router.get("/goals/current")
 def get_current_goal(user_id: int = Depends(get_current_user)):
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        """SELECT id, name, target_amount, current_amount, deadline, image_url
-           FROM goals WHERE user_id = ? AND is_completed = 0""",
-        (user_id,)
-    )
-    goal = cursor.fetchone()
-    conn.close()
+        cursor.execute(
+            """SELECT id, name, target_amount, current_amount, deadline, image_url
+            FROM goals WHERE user_id = %s AND is_completed = FALSE""",
+            (user_id,)
+        )
+        goal = cursor.fetchone()
 
     if goal is None:
         raise HTTPException(status_code=404, detail="진행 중인 목표가 없습니다")
@@ -102,51 +99,48 @@ def update_goal(req: GoalUpdate, user_id: int = Depends(get_current_user)):
     if req.target_amount is not None and req.target_amount <= 0:
         raise HTTPException(status_code=400, detail="금액 설정이 올바르지 않습니다")
     
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    # 1. 수정 대상 = 이 사용자의 진행 중인 목표 (검사 먼저, goal[0] 사용은 그 다음!)
-    cursor.execute(
-        "SELECT id, current_amount FROM goals WHERE user_id = ? AND is_completed = 0",
-        (user_id,)
-    )
-    goal = cursor.fetchone()
-    if goal is None:
-        conn.close()
-        raise HTTPException(status_code=404, detail="진행 중인 목표가 없습니다")
+        # 1. 수정 대상 = 이 사용자의 진행 중인 목표 (검사 먼저, goal[0] 사용은 그 다음!)
+        cursor.execute(
+            "SELECT id, current_amount FROM goals WHERE user_id = %s AND is_completed = FALSE",
+            (user_id,)
+        )
+        goal = cursor.fetchone()
+        if goal is None:
+            raise HTTPException(status_code=404, detail="진행 중인 목표가 없습니다")
 
-    goal_id, current_amount = goal
+        goal_id, current_amount = goal
 
-    # 이미 모은 금액보다 낮게는 설정 불가 (설정 즉시 달성되는 애매한 상태 방지)
-    if req.target_amount is not None and req.target_amount <= current_amount:
-        conn.close()
-        raise HTTPException(
-            status_code=400, 
-            detail= f"이미 {current_amount:,}원을 모았어요. 목표 금액은 그보다 커야 합니다"
+        # 이미 모은 금액보다 낮게는 설정 불가 (설정 즉시 달성되는 애매한 상태 방지)
+        if req.target_amount is not None and req.target_amount <= current_amount:
+            raise HTTPException(
+                status_code=400, 
+                detail= f"이미 {current_amount:,}원을 모았어요. 목표 금액은 그보다 커야 합니다"
+            )
+
+        # 2. 부분 수정: COALESCE(%s, 컬럼) → 보낸 값(None 아님)은 새 값으로,
+        #    안 보낸 값(None→NULL)은 자기 자신으로 갱신 = 기존 값 유지
+        cursor.execute(
+            """UPDATE goals SET name = COALESCE(%s, name),
+            target_amount = COALESCE(%s, target_amount),
+            deadline = COALESCE(%s, deadline),
+            image_url = COALESCE(%s, image_url)
+            WHERE id = %s""",
+            (req.name, req.target_amount, req.deadline, req.image_url, goal_id)
         )
 
-    # 2. 부분 수정: COALESCE(?, 컬럼) → 보낸 값(None 아님)은 새 값으로,
-    #    안 보낸 값(None→NULL)은 자기 자신으로 갱신 = 기존 값 유지
-    cursor.execute(
-        """UPDATE goals SET name = COALESCE(?, name),
-        target_amount = COALESCE(?, target_amount),
-        deadline = COALESCE(?, deadline),
-        image_url = COALESCE(?, image_url)
-        WHERE id = ?""",
-        (req.name, req.target_amount, req.deadline, req.image_url, goal_id)
-    )
+        # 3. 수정 후 최신 상태를 다시 읽어 응답에 담는다
+        #    (API 관례: 수정 후엔 자원의 최신 상태를 돌려줌 → 프론트가 재호출 없이 화면 갱신)
+        cursor.execute(
+            """SELECT name, target_amount, current_amount, deadline, image_url
+            FROM goals WHERE id = %s""",
+            (goal_id,)
+        )
+        name, target_amount, current_amount, deadline, image_url = cursor.fetchone()
 
-    # 3. 수정 후 최신 상태를 다시 읽어 응답에 담는다
-    #    (API 관례: 수정 후엔 자원의 최신 상태를 돌려줌 → 프론트가 재호출 없이 화면 갱신)
-    cursor.execute(
-        """SELECT name, target_amount, current_amount, deadline, image_url
-        FROM goals WHERE id = ?""",
-        (goal_id,)
-    )
-    name, target_amount, current_amount, deadline, image_url = cursor.fetchone()
-
-    conn.commit()
-    conn.close()
+        conn.commit()
 
     # 4. 파생 값은 저장하지 않고 매번 계산
     progress = round(current_amount / target_amount * 100, 1)
@@ -165,56 +159,51 @@ def update_goal(req: GoalUpdate, user_id: int = Depends(get_current_user)):
 
 @router.delete("/goals/current")
 def delete_goal(user_id: int = Depends(get_current_user)):
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT id FROM goals WHERE user_id = ? AND is_completed = 0",
-        (user_id,)
-    )
-    goal = cursor.fetchone()
+        cursor.execute(
+            "SELECT id FROM goals WHERE user_id = %s AND is_completed = FALSE",
+            (user_id,)
+        )
+        goal = cursor.fetchone()
 
-    if goal is None:
-        conn.close()
-        raise HTTPException(status_code=404, detail="진행 중인 목표가 없습니다")
-    goal_id = goal[0]
+        if goal is None:
+            raise HTTPException(status_code=404, detail="진행 중인 목표가 없습니다")
+        goal_id = goal[0]
 
-    cursor.execute("DELETE FROM savings WHERE goal_id = ?", (goal_id,))
-    cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
+        cursor.execute("DELETE FROM savings WHERE goal_id = %s", (goal_id,))
+        cursor.execute("DELETE FROM goals WHERE id = %s", (goal_id,))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
     return {"message": "goal deleted"}
 
 @router.delete("/goals/{goal_id}")
 def delete_completed_goal(goal_id: int, user_id: int = Depends(get_current_user)):
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT is_completed FROM goals WHERE id = ? AND user_id = ?",
-        (goal_id, user_id)
-    )
-    goal = cursor.fetchone()
+        cursor.execute(
+            "SELECT is_completed FROM goals WHERE id = %s AND user_id = %s",
+            (goal_id, user_id)
+        )
+        goal = cursor.fetchone()
 
-    if goal is None:
-        conn.close()
-        raise HTTPException(status_code=404, detail= "목표를 찾을 수 없습니다")
+        if goal is None:
+            raise HTTPException(status_code=404, detail= "목표를 찾을 수 없습니다")
 
-    # 2. 완료된 목표인지 확인 (미완료면 400 — 그건 /goals/current로 지우도록)
-    completed_flag = goal[0]
-    if completed_flag != 1:
-        conn.close()
-        raise HTTPException(status_code=400, detail="완료되지 않은 목표는 이 경로로 삭제할 수 없습니다")
-        # 사용자에게는 보이지 않을 문구, 개발자에게 왜 거부되었는지 알려주는 말(방어선의 기술적 설명)
+        # 2. 완료된 목표인지 확인 (미완료면 400 — 그건 /goals/current로 지우도록)
+        completed_flag = goal[0]
+        if not completed_flag:
+            raise HTTPException(status_code=400, detail="완료되지 않은 목표는 이 경로로 삭제할 수 없습니다")
+            # 사용자에게는 보이지 않을 문구, 개발자에게 왜 거부되었는지 알려주는 말(방어선의 기술적 설명)
 
-    # 3. savings 먼저 → goals 삭제 (순서!)
-    cursor.execute("DELETE FROM savings WHERE goal_id = ?", (goal_id,))
-    cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
-    # 4. commit
-    conn.commit()
-    conn.close()
+        # 3. savings 먼저 → goals 삭제 (순서!)
+        cursor.execute("DELETE FROM savings WHERE goal_id = %s", (goal_id,))
+        cursor.execute("DELETE FROM goals WHERE id = %s", (goal_id,))
+        # 4. commit
+        conn.commit()
 
     return {"message": "goal deleted"}
 
@@ -225,18 +214,17 @@ def days_before_deadline(deadline: str, completed_at: str) -> int:
 
 @router.get("/goals/history")
 def get_goals_history(user_id: int = Depends(get_current_user)):
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    # 목록 조회는 조건으로 한 번에 (특정된 하나가 아니므로 2단계 불필요)
-    cursor.execute(
-        """SELECT id, name, target_amount, current_amount, deadline, image_url, completed_at
-        FROM goals WHERE user_id = ? AND is_completed = 1
-        ORDER BY completed_at DESC""",
-        (user_id,)
-    )
-    goals_completed = cursor.fetchall()
-    conn.close()
+        # 목록 조회는 조건으로 한 번에 (특정된 하나가 아니므로 2단계 불필요)
+        cursor.execute(
+            """SELECT id, name, target_amount, current_amount, deadline, image_url, completed_at
+            FROM goals WHERE user_id = %s AND is_completed = TRUE
+            ORDER BY completed_at DESC""",
+            (user_id,)
+        )
+        goals_completed = cursor.fetchall()
 
     # 빈 리스트 = "아직 달성한 목표 없음" — 에러 아닌 정상 응답
     return {"history": [
@@ -249,24 +237,22 @@ def get_goals_history(user_id: int = Depends(get_current_user)):
 
 @router.get("/goals/{goal_id}/savings")
 def get_goal_savings(goal_id: int, user_id: int = Depends(get_current_user)):
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    cursor.execute("SELECT id FROM goals WHERE id = ? AND user_id = ?",
-    (goal_id, user_id))
-    if cursor.fetchone() is None :
-        conn.close()
-        raise HTTPException(status_code=404, detail= "목표를 찾을 수 없습니다")
-    
-    cursor.execute(
-        """SELECT id, category, amount, memo, image_url, created_at
-           FROM savings
-           WHERE user_id = ? AND goal_id = ?
-           ORDER BY created_at DESC""",
-        (user_id, goal_id)
-    )
-    rows = cursor.fetchall()
-    conn.close()
+        cursor.execute("SELECT id FROM goals WHERE id = %s AND user_id = %s",
+        (goal_id, user_id))
+        if cursor.fetchone() is None :
+            raise HTTPException(status_code=404, detail= "목표를 찾을 수 없습니다")
+        
+        cursor.execute(
+            """SELECT id, category, amount, memo, image_url, created_at
+            FROM savings
+            WHERE user_id = %s AND goal_id = %s
+            ORDER BY created_at DESC""",
+            (user_id, goal_id)
+        )
+        rows = cursor.fetchall()
 
     return {"savings": [
         {"id": row[0], "category": row[1], "amount": row[2], "memo": row[3],

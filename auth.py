@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
-from database import get_connection
+from database import get_db
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 load_dotenv()   # .env 파일을 읽어 환경변수로 등록
@@ -34,23 +34,21 @@ def signup(req: SignupRequest):
     if not req.email.strip() or not req.password.strip() or not req.nickname.strip():
         raise HTTPException(status_code=400, detail="모든 항목을 입력해주세요")
     
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    # 이메일 중복 확인
-    cursor.execute("SELECT id FROM users WHERE email = ?", (req.email,))
-    if cursor.fetchone() is not None:
-        conn.close()
-        raise HTTPException(status_code=409, detail="이미 가입된 이메일입니다")
+        # 이메일 중복 확인
+        cursor.execute("SELECT id FROM users WHERE email = %s", (req.email,))
+        if cursor.fetchone() is not None:
+            raise HTTPException(status_code=409, detail="이미 가입된 이메일입니다")
 
-    # 비밀번호 해시 후 저장
-    password_hash = pwd_context.hash(req.password)
-    cursor.execute(
-        "INSERT INTO users (email, password_hash, nickname, created_at) VALUES (?, ?, ?, ?)",
-        (req.email, password_hash, req.nickname, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
-    conn.commit()
-    conn.close()
+        # 비밀번호 해시 후 저장
+        password_hash = pwd_context.hash(req.password)
+        cursor.execute(
+            "INSERT INTO users (email, password_hash, nickname, created_at) VALUES (%s, %s, %s, %s)",
+            (req.email, password_hash, req.nickname, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        )
+        conn.commit()
 
     return {"message": "signup success"}
 
@@ -61,14 +59,14 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 def login(req: LoginRequest):
-    conn = get_connection()
-    cursor = conn.cursor()
+    with get_db() as conn:
+        cursor = conn.cursor()
 
-    # 1. 이메일로 사용자 찾기
-    cursor.execute("SELECT id, password_hash FROM users WHERE email = ?", (req.email,))
-    user = cursor.fetchone()
-    conn.close()
+        # 1. 이메일로 사용자 찾기
+        cursor.execute("SELECT id, password_hash FROM users WHERE email = %s", (req.email,))
+        user = cursor.fetchone()
 
+    # 블록 밖 — DB 작업이 끝났으므로 연결은 이미 닫힘
     if user is None:
         raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 틀렸습니다")
 
