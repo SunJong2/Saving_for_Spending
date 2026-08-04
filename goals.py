@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from datetime import datetime
-from database import get_db
+from database import get_db, KST
 from auth import get_current_user
 
 router = APIRouter()
@@ -22,7 +22,7 @@ def create_goal(req: GoalCreate, user_id: int = Depends(get_current_user)):
         deadline_date = datetime.strptime(req.deadline, "%Y-%m-%d")
     except ValueError:
         raise HTTPException(status_code=400, detail="날짜 형식이 올바르지 않습니다 (YYYY-MM-DD)")
-    if deadline_date <= datetime.now():
+    if deadline_date.date() <= datetime.now(KST).date():
         raise HTTPException(status_code=400, detail="마감일은 오늘 이후여야 합니다")
     if req.target_amount <= 0:
         raise HTTPException(status_code=400, detail="금액 설정이 올바르지 않습니다")
@@ -39,7 +39,7 @@ def create_goal(req: GoalCreate, user_id: int = Depends(get_current_user)):
         # 2. INSERT (created_at은 datetime.now()... 패턴, 2주차 signup 참고)
         cursor.execute(
             "INSERT INTO goals (user_id, name, target_amount, deadline, image_url, created_at) VALUES (%s, %s, %s, %s, %s, %s)",
-            (user_id, req.name, req.target_amount, req.deadline, req.image_url, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            (user_id, req.name, req.target_amount, req.deadline, req.image_url, datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"))
         )
         # 3. commit
         conn.commit()
@@ -65,7 +65,7 @@ def get_current_goal(user_id: int = Depends(get_current_user)):
 
     # 서버에서 계산해서 얹어주는 값들
     progress = round(current_amount / target_amount * 100, 1)
-    d_day = (datetime.strptime(deadline, "%Y-%m-%d").date() - datetime.now().date()).days
+    d_day = (datetime.strptime(deadline, "%Y-%m-%d").date() - datetime.now(KST).date()).days
 
     return {
         "id": goal_id,
@@ -93,7 +93,7 @@ def update_goal(req: GoalUpdate, user_id: int = Depends(get_current_user)):
             deadline_date = datetime.strptime(req.deadline, "%Y-%m-%d")
         except ValueError:
             raise HTTPException(status_code=400, detail="날짜 형식이 올바르지 않습니다 (YYYY-MM-DD)")
-        if deadline_date <= datetime.now():
+        if deadline_date.date() <= datetime.now(KST).date():
             raise HTTPException(status_code=400, detail="마감일은 오늘 이후여야 합니다")
         
     if req.target_amount is not None and req.target_amount <= 0:
@@ -144,7 +144,7 @@ def update_goal(req: GoalUpdate, user_id: int = Depends(get_current_user)):
 
     # 4. 파생 값은 저장하지 않고 매번 계산
     progress = round(current_amount / target_amount * 100, 1)
-    d_day = (datetime.strptime(deadline, "%Y-%m-%d").date() - datetime.now().date()).days
+    d_day = (datetime.strptime(deadline, "%Y-%m-%d").date() - datetime.now(KST).date()).days
 
     return {
         "id": goal_id,

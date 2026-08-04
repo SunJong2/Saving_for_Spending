@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from datetime import datetime          # created_at 만들 때 필요
-from database import get_db
+from database import get_db, KST
 from auth import get_current_user
 
 router = APIRouter()
@@ -41,7 +41,7 @@ def create_saving(req: SavingCreate, user_id: int = Depends(get_current_user)):
         cursor.execute(
             "INSERT INTO savings (user_id, goal_id, category, amount, memo, image_url, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s)",
             (user_id, goal_id, req.category, req.amount, req.memo, req.image_url,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"))
         )
 
         # 3. 그 목표의 모인 금액을 기록한 만큼 증가
@@ -60,7 +60,7 @@ def create_saving(req: SavingCreate, user_id: int = Depends(get_current_user)):
         if current >= target:
             cursor.execute(
                 "UPDATE goals SET is_completed = TRUE, completed_at = %s WHERE id = %s",
-                (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), goal_id)
+                (datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"), goal_id)
             )
             conn.commit()
 

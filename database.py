@@ -2,6 +2,9 @@ import os
 import psycopg
 from contextlib import contextmanager
 from dotenv import load_dotenv
+from datetime import timezone, timedelta
+
+KST = timezone(timedelta(hours=9))
 
 load_dotenv()
 

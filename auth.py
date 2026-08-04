@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
-from database import get_db
+from database import get_db, KST
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 load_dotenv()   # .env 파일을 읽어 환경변수로 등록
@@ -46,7 +46,7 @@ def signup(req: SignupRequest):
         password_hash = pwd_context.hash(req.password)
         cursor.execute(
             "INSERT INTO users (email, password_hash, nickname, created_at) VALUES (%s, %s, %s, %s)",
-            (req.email, password_hash, req.nickname, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            (req.email, password_hash, req.nickname, datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"))
         )
         conn.commit()
 
