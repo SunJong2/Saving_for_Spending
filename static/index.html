@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <div class="container has tabbar">
+    <div class="container has-tabbar">
         <div class="header">
             <span style="font-weight: 700; font-size: 17px;">저금통</span>
             <button class="header-btn-text" onclick="logout()">로그아웃</button>
@@ -226,20 +226,29 @@
             document.getElementById("deleteModal").style.display = "none";
         }
 
+        let isDeletingGoal = false;
+
         async function deleteGoal() {
-            const res = await fetch("/goals/current", {
-                method: "DELETE",
-                headers: { "Authorization": "Bearer " + token }
-            });
+            if (isDeletingGoal) return;
+            isDeletingGoal = true;
 
-            if (res.status === 401) {
-                localStorage.removeItem("token");
-                location.href = "login.html?expired=1";
-                return;
-            }
+            try {
+                const res = await fetch("/goals/current", {
+                    method: "DELETE",
+                    headers: { "Authorization": "Bearer " + token }
+                });
 
-            if (res.ok) {
-                location.reload();   // 홈 새로고침 → 목표가 없으니 "목표 만들기" 화면으로
+                if (res.status === 401) {
+                    localStorage.removeItem("token");
+                    location.href = "login.html?expired=1";
+                    return;
+                }
+
+                if (res.ok) {
+                    location.reload();   // 홈 새로고침 → 목표가 없으니 "목표 만들기" 화면으로
+                }
+            } finally {
+                isDeletingGoal = false;
             }
         }
 
@@ -269,20 +278,29 @@
             hideDeleteConfirm();   // 다음에 열 때를 위해 상세 뷰로 되돌림
         }
 
+        let isDeletingSaving = false;
+
         async function deleteSaving() {
-            const res = await fetch(`/savings/${selectedSavingId}`, {
-                method: "DELETE",
-                headers: { "Authorization": "Bearer " + token }
-            });
+            if (isDeletingSaving) return;
+            isDeletingSaving = true;
 
-            if (res.status === 401) {
-                localStorage.removeItem("token");
-                location.href = "login.html?expired=1";
-                return;
-            }
+            try {
+                const res = await fetch(`/savings/${selectedSavingId}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": "Bearer " + token }
+                });
 
-            if (res.ok) {
-                location.reload();   // 목록 + 진행률 바 전부 최신화
+                if (res.status === 401) {
+                    localStorage.removeItem("token");
+                    location.href = "login.html?expired=1";
+                    return;
+                }
+
+                if (res.ok) {
+                    location.reload();   // 목록 + 진행률 바 전부 최신화
+                }
+            } finally {
+                isDeletingSaving = false;
             }
         }
 

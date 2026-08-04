@@ -59,59 +59,66 @@
         }
         checkGoal();
 
+        let isAddingSaving = false;
+
         async function add_saving() {
+            if (isAddingSaving) return;   // 이미 처리 중이면 두 번째 클릭부터 무시
+            isAddingSaving = true;
             
-            // 입력창에서 현재 값 읽기
-            const category = document.getElementById("category").value;
-            const amount = parseInt(document.getElementById("amount").value.replace(/,/g, ""));
-            const memo = document.getElementById("memo").value;
+            try {
+                // 입력창에서 현재 값 읽기
+                const category = document.getElementById("category").value;
+                const amount = parseInt(document.getElementById("amount").value.replace(/,/g, ""));
+                const memo = document.getElementById("memo").value;
 
-            // 0. 프론트 입력 검증 — 서버에 보내기 전에 차단 (프론트판 "문지기는 문 앞에")
-            if (!category) {
-                document.getElementById("errorMsg").textContent = "무엇을 아꼈는지 입력해주세요";
-                return;
-            }
-            if (!amount || amount <= 0) {
-                document.getElementById("errorMsg").textContent = "올바른 형식의 금액을 입력헤주세요";
-                return;
-            }
-            
-            const response = await fetch("/savings", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token
-                },
-                body: JSON.stringify({category, amount , memo})
-            });
-
-            if (response.status === 401) {
-                localStorage.removeItem("token");   // 죽은 토큰 청소
-                location.href = "login.html?expired=1";
-                return;
-            }
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.goal_completed) {
-                    document.getElementById("congratsProgress").textContent = data.progress + "% 달성";
-
-                    // 초과 달성이면 다른 문구
-                    document.getElementById("congratsMessage").textContent = 
-                        data.progress > 100
-                            ? "목표를 넘어섰어요! 갖고 싶던 걸 가져보세요 🎁"
-                            : "해냈어요. 갖고 싶던 걸 가져보세요 🎁";
-
-                    // 모달 띄우기 (홈으로 이동하지 않고 여기서 멈춤)
-                    document.getElementById("congratsModal").style.display = "flex";
+                // 0. 프론트 입력 검증 — 서버에 보내기 전에 차단 (프론트판 "문지기는 문 앞에")
+                if (!category) {
+                    document.getElementById("errorMsg").textContent = "무엇을 아꼈는지 입력해주세요";
                     return;
                 }
-                location.href = "index.html";
-            } else {
-                const data = await response.json();
-                document.getElementById("errorMsg").textContent = data.detail;
-            }
+                if (!amount || amount <= 0) {
+                    document.getElementById("errorMsg").textContent = "올바른 형식의 금액을 입력헤주세요";
+                    return;
+                }
+                
+                const response = await fetch("/savings", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({category, amount , memo})
+                });
 
+                if (response.status === 401) {
+                    localStorage.removeItem("token");   // 죽은 토큰 청소
+                    location.href = "login.html?expired=1";
+                    return;
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.goal_completed) {
+                        document.getElementById("congratsProgress").textContent = data.progress + "% 달성";
+
+                        // 초과 달성이면 다른 문구
+                        document.getElementById("congratsMessage").textContent = 
+                            data.progress > 100
+                                ? "목표를 넘어섰어요! 갖고 싶던 걸 가져보세요 🎁"
+                                : "해냈어요. 갖고 싶던 걸 가져보세요 🎁";
+
+                        // 모달 띄우기 (홈으로 이동하지 않고 여기서 멈춤)
+                        document.getElementById("congratsModal").style.display = "flex";
+                        return;
+                    }
+                    location.href = "index.html";
+                } else {
+                    const data = await response.json();
+                    document.getElementById("errorMsg").textContent = data.detail;
+                }
+            } finally {
+                isAddingSaving = false;   // 성공/실패 무관하게 잠금 해제
+            }
         }
         // 금액 입력 시 실시간 콤마 표시
         document.getElementById("amount").addEventListener("input", (e) => {

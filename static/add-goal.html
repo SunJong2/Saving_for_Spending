@@ -20,9 +20,18 @@
 
         <!-- 입력 폼 영역 (form 태그 대신 div: 버튼의 자동 submit 동작 방지) -->
         <div style="display: flex; flex-direction: column; gap: 12px;">
-            <input class="input" type="text" id="name" placeholder="목표 이름">
-            <input class="input" type="text" id="targetAmount" placeholder="목표 금액" inputmode="numeric">
-            <input class="input" type="date" id="deadline" placeholder="마감일">
+            <div>
+                <label class="field-label">목표 이름</label>
+                <input class="input" type="text" id="name" placeholder="예: 에어팟 프로">
+            </div>
+            <div>
+                <label class="field-label">목표 금액</label>
+                <input class="input" type="text" id="targetAmount" placeholder="숫자만 입력" inputmode="numeric">
+            </div>
+            <div>
+                <label class="field-label">마감일</label>
+                <input class="input" type="date" id="deadline">
+            </div>
             <!-- 에러 문구 자리 (평소엔 비어 있고, JS가 상황별 문구를 채움) -->
             <p class="error-msg" id="errorMsg"></p>
             <button class="btn-primary" onclick="add_goal()">목표 생성</button>
@@ -48,50 +57,57 @@
         }
         checkExistingGoal();
 
+        let isAddingGoal = false;
+
         async function add_goal() {
-            
-            // 입력창에서 현재 값 읽기
-            const name = document.getElementById("name").value;
-            const targetAmount = parseInt(document.getElementById("targetAmount").value.replace(/,/g, ""));
-            const deadline = document.getElementById("deadline").value;
+            if (isAddingGoal) return;
+            isAddingGoal = true;
 
-            // 0. 프론트 입력 검증 — 서버에 보내기 전에 차단 (프론트판 "문지기는 문 앞에")
-            if (!name) {
-                document.getElementById("errorMsg").textContent = "이름을 입력해주세요";
-                return;
-            }
-            if (!targetAmount || targetAmount <= 0) {
-                document.getElementById("errorMsg").textContent = "올바른 형식의 금액을 입력헤주세요";
-                return;
-            }
-            if (!deadline) {
-                document.getElementById("errorMsg").textContent = "마감일을 입력해주세요";
-                return;
-            }
-            
-            const response = await fetch("/goals", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token
-                },
-                body: JSON.stringify({name, target_amount: targetAmount, deadline})
-            });
+            try {
+                // 입력창에서 현재 값 읽기
+                const name = document.getElementById("name").value;
+                const targetAmount = parseInt(document.getElementById("targetAmount").value.replace(/,/g, ""));
+                const deadline = document.getElementById("deadline").value;
 
-            if (response.status === 401) {
-                localStorage.removeItem("token");   // 죽은 토큰 청소
-                location.href = "login.html?expired=1";
-                return;
-            }
+                // 0. 프론트 입력 검증 — 서버에 보내기 전에 차단 (프론트판 "문지기는 문 앞에")
+                if (!name) {
+                    document.getElementById("errorMsg").textContent = "이름을 입력해주세요";
+                    return;
+                }
+                if (!targetAmount || targetAmount <= 0) {
+                    document.getElementById("errorMsg").textContent = "올바른 형식의 금액을 입력헤주세요";
+                    return;
+                }
+                if (!deadline) {
+                    document.getElementById("errorMsg").textContent = "마감일을 입력해주세요";
+                    return;
+                }
+                
+                const response = await fetch("/goals", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({name, target_amount: targetAmount, deadline})
+                });
 
-            if (response.ok) {
-                const data = await response.json();
-                location.href = "index.html";
-            } else {
-                const data = await response.json();
-                document.getElementById("errorMsg").textContent = data.detail;
-            }
+                if (response.status === 401) {
+                    localStorage.removeItem("token");   // 죽은 토큰 청소
+                    location.href = "login.html?expired=1";
+                    return;
+                }
 
+                if (response.ok) {
+                    const data = await response.json();
+                    location.href = "index.html";
+                } else {
+                    const data = await response.json();
+                    document.getElementById("errorMsg").textContent = data.detail;
+                }
+            } finally {
+                isAddingGoal = false;
+            }
         }
         // 금액 입력 시 실시간 콤마 표시
         document.getElementById("targetAmount").addEventListener("input", (e) => {

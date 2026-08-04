@@ -177,20 +177,29 @@
             document.getElementById("detailModal").style.display = "flex";
         }
 
+        let isDeletingCompletedGoal = false;
+
         async function deleteCompletedGoal() {
-            const res = await fetch(`/goals/${selectedGoalId}`,{
-                method: "DELETE",
-                headers: { "Authorization": "Bearer " + token }
-            });
+            if (isDeletingCompletedGoal) return;
+            isDeletingCompletedGoal = true;
 
-            if (res.status === 401) {
-                localStorage.removeItem("token");
-                location.href = "login.html?expired=1";
-                return;
-            }
+            try {
+                const res = await fetch(`/goals/${selectedGoalId}`,{
+                    method: "DELETE",
+                    headers: { "Authorization": "Bearer " + token }
+                });
 
-            if (res.ok) {
-                location.reload();
+                if (res.status === 401) {
+                    localStorage.removeItem("token");
+                    location.href = "login.html?expired=1";
+                    return;
+                }
+
+                if (res.ok) {
+                    location.reload();
+                }
+            } finally {
+                isDeletingCompletedGoal = false;
             }
         }
 
