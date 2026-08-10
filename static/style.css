@@ -108,7 +108,7 @@ input[type="date"]::-webkit-date-and-time-value {
 /* ===== 진행률 바 ===== */
 .progress-track {
     width: 100%;
-    height: 16px;
+    height: 18px;
     background: #E5E8EB;          /* 안 채워진 배경 (회색 트랙) */
     border-radius: 999px;         /* 완전 둥근 알약 모양 */
     overflow: hidden;             /* 채움이 트랙 밖으로 안 삐져나가게 */
@@ -203,7 +203,10 @@ input[type="date"]::-webkit-date-and-time-value {
 }
 
 .tab.active { color: #7C4DFF; font-weight: 600; }
-.tab-icon { font-size: 20px; }
+.tab-icon { 
+    width: 20px;
+    height: 20px; 
+}
 
 /* 탭바에 콘텐츠가 가리지 않도록 여백 */
 .has-tabbar { padding-bottom: 80px; }
@@ -213,4 +216,16 @@ input[type="date"]::-webkit-date-and-time-value {
     font-size: 13px;
     color: var(--text-sub);
     margin-bottom: 6px;
+}
+
+.hero-amount {
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.hero-amount .unit {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-sub);
 }

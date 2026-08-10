@@ -33,11 +33,24 @@
 
     <div class="tabbar">
         <button class="tab" onclick="location.href='index.html'">
-            <span class="tab-icon">🏠</span>
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
             홈
         </button>
         <button class="tab active" onclick="location.href='history.html'">
-            <span class="tab-icon">🏆</span>
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2"/>
+                <path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2"/>
+                <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3"/>
+                <path d="M4 22h16"/><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
+                <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3"/>
+            </svg>
             히스토리
         </button>
     </div>
@@ -61,7 +74,14 @@
 
             <!-- 뷰 2: 삭제 확인 (기본 숨김) -->
             <div id="deleteConfirmView" style="display: none; text-align: center;">
-                <div style="font-size: 48px;">🗑️</div>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" 
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 11v6"/>
+                    <path d="M14 11v6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                    <path d="M3 6h18"/>
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
                 <h2 style="font-size: 20px; margin: 16px 0 8px;">이 목표를 삭제할까요?</h2>
                 <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
                     달성 기록이 사라져요

@@ -31,18 +31,19 @@
                 </button>
             </div>
 
-            <!-- 저금통 자리 (다음 세션에서 꾸밈) -->
+            <!-- 저금통 자리 -->
             <div style="background: var(--bg-section); border-radius: var(--radius);
-                        padding: 32px 24px; text-align: center; margin: 24px 0;">
-                <div style="font-size: 56px;">🐷</div>
+                        padding: 40px 24px; text-align: center; margin: 24px 0;">
 
+                <p class="text-sub" style="margin-bottom: 4px;">지금까지 모았어요</p>
+                <h2 id="currentAmount" class="hero-amount"></h2>
+                <p id="targetAmount" class="text-sub" style="color: #4E5968;" ></p>
                 <!-- 진행률 바 -->
                 <div class="progress-track">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
 
-                <p id="progressText" class="text-sub" style="margin-bottom: 4px;"></p>
-                <h2 id="amountText"></h2>
+                <p id="progressText" class="text-sub" style="margin-top: 8px;"></p>
             </div>
 
             <button class="btn-primary" onclick="location.href='add-saving.html'">
@@ -72,18 +73,38 @@
 
     <div class="tabbar">
         <button class="tab active" onclick="location.href='index.html'">
-            <span class="tab-icon">🏠</span>
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
             홈
         </button>
         <button class="tab" onclick="location.href='history.html'">
-            <span class="tab-icon">🏆</span>
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2"/>
+                <path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2"/>
+                <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3"/>
+                <path d="M4 22h16"/><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
+                <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3"/>
+            </svg>
             히스토리
         </button>
     </div>
 
     <div class="modal-overlay" id="deleteModal">
         <div class="modal-card">
-            <div style="font-size: 48px;">🗑️</div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" 
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 11v6"/>
+                    <path d="M14 11v6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                    <path d="M3 6h18"/>
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
             <h2 style="font-size: 20px; margin: 16px 0 8px;">목표를 삭제할까요?</h2>
             <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
                 지금까지 기록한 절약 내역도 함께 사라져요
@@ -116,7 +137,14 @@
 
             <!-- 삭제 확인 화면 (기본 숨김) -->
             <div id="savingDeleteView" style="display: none; text-align: center;">
-                <div style="font-size: 48px;">🗑️</div>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" 
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 11v6"/>
+                    <path d="M14 11v6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                    <path d="M3 6h18"/>
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
                 <h2 style="font-size: 20px; margin: 16px 0 8px;">이 기록을 삭제할까요?</h2>
                 <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
                     삭제하면 되돌릴 수 없어요
@@ -182,9 +210,13 @@
                 ddayEl.style.color = "#F04452";
             }
             document.getElementById("goalName").textContent = goal.name;
-            document.getElementById("amountText").textContent =
-                goal.current_amount.toLocaleString() + "원 / " + goal.target_amount.toLocaleString() + "원";
-            document.getElementById("progressText").textContent = goal.progress + "% 달성";
+            document.getElementById("currentAmount").innerHTML =
+                goal.current_amount.toLocaleString() + '<span class="unit">원</span>';
+            document.getElementById("targetAmount").textContent = 
+                "목표 " + goal.target_amount.toLocaleString() + "원";
+            const remaining = goal.target_amount - goal.current_amount;
+            document.getElementById("progressText").textContent =
+                `목표까지 ${remaining.toLocaleString()}원 · ${goal.progress}%`;
 
             // 진행률 바 채우기 — 100 넘어도 바는 100까지만 (숫자는 위에서 실제값 표시)
             const fillWidth = Math.min(goal.progress, 100);
