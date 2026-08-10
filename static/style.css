@@ -4,6 +4,9 @@
     --bg-section: #F7F8FA;
     --text: #191F28;
     --text-sub: #8B95A1;
+    --text-mid: #4E5968;      /* 흐린 회색과 검정 사이 — 보조 정보용 */
+    --primary: #7C4DFF;       /* 포인트 보라 */
+    --danger: #F04452;        /* 경고/삭제 빨강 */
     --gradient: linear-gradient(135deg, #7C4DFF, #448AFF);
     --radius: 16px;
 }
@@ -22,7 +25,6 @@ body {
     margin: 0 auto;
     padding: 24px;
     min-height: 100vh;    /* 이건 유지 — 화면 꽉 채우는 용도 */
-    /* display: flex; flex-direction: column; ← 이 두 줄을 지움 */
 }
 
 /* ===== 공용 컴포넌트 ===== */
@@ -30,6 +32,12 @@ body {
     font-size: 28px;
     font-weight: 700;
     line-height: 1.4;
+}
+
+/* 섹션 제목 ("최근 기록", "달성 기록") — 위 여백은 자리마다 달라서 인라인으로 */
+.section-title {
+    font-size: 18px;
+    margin-bottom: 12px;
 }
 
 .input {
@@ -41,7 +49,7 @@ body {
     outline: none;
     transition: border-color 0.2s;
 }
-.input:focus { border-color: #7C4DFF; }
+.input:focus { border-color: var(--primary); }
 
 /* iOS에서 date input이 회색 배경·고정 너비로 삐져나오는 것 교정 */
 input[type="date"] {
@@ -88,7 +96,7 @@ input[type="date"]::-webkit-date-and-time-value {
     padding: 16px;
     border: none;
     border-radius: var(--radius);
-    background: #F04452;
+    background: var(--danger);
     color: white;
     font-size: 16px;
     font-weight: 600;
@@ -96,13 +104,80 @@ input[type="date"]::-webkit-date-and-time-value {
 }
 .btn-danger:active { opacity: 0.85; }
 
+/* 두 버튼을 나란히 놓는 행 (위 여백은 자리마다 달라서 인라인 유지) */
+.btn-row { display: flex; gap: 8px; }
+/* 모달 안 전체 너비 버튼 (취소 등) */
+.btn-block { width: 100%; }
+
 .text-sub { color: var(--text-sub); font-size: 14px; }
-.link { color: #7C4DFF; text-decoration: none; font-weight: 600; }
+.text-mid { color: var(--text-mid); }
+.text-danger { color: var(--danger); }
+.link { color: var(--primary); text-decoration: none; font-weight: 600; }
 
 .error-msg {
-    color: #F04452;
+    color: var(--danger);
     font-size: 14px;
     min-height: 20px;
+}
+
+/* ===== 로딩 스피너 ===== */
+.spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--bg-section);   /* 연한 회색 링 */
+    border-top-color: var(--primary);      /* 한 조각만 브랜드색 → 도는 느낌 */
+    border-radius: 50%;
+    margin: 80px auto;                     /* 화면 중앙 배치 */
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== 상단 헤더 제목 ===== */
+.header-title { font-weight: 700; font-size: 17px; }
+
+/* ===== 저금통 (홈 히어로) ===== */
+.savings-box {
+    background: var(--bg-section);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    margin: 24px 0;
+    text-align: center;
+}
+
+.hero-amount {
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--text);
+}
+.hero-amount .unit {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-sub);
+}
+
+/* 목표 금액 줄 — 중간 회색으로 보조 정보답게 */
+.hero-target {
+    font-size: 14px;
+    color: var(--text-mid);
+}
+
+/* ===== 리스트 아이템 ===== */
+/* 홈 "최근 기록" 한 줄 */
+.list-item {
+    background: var(--bg-section);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+/* 히스토리 "달성 기록" 카드 */
+.history-item {
+    background: var(--bg-section);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
 }
 
 /* ===== 진행률 바 ===== */
@@ -144,6 +219,11 @@ input[type="date"]::-webkit-date-and-time-value {
     max-width: 360px;
     text-align: center;
 }
+
+/* 모달 공통 조각 */
+.modal-icon { width: 48px; height: 48px; color: var(--text-sub); }
+.modal-title { font-size: 20px; margin: 16px 0 8px; }
+.modal-desc { color: var(--text-sub); font-size: 14px; margin-bottom: 28px; }
 
 /* ===== 상단 헤더 ===== */
 .header {
@@ -202,10 +282,10 @@ input[type="date"]::-webkit-date-and-time-value {
     color: var(--text-sub);
 }
 
-.tab.active { color: #7C4DFF; font-weight: 600; }
-.tab-icon { 
+.tab.active { color: var(--primary); font-weight: 600; }
+.tab-icon {
     width: 20px;
-    height: 20px; 
+    height: 20px;
 }
 
 /* 탭바에 콘텐츠가 가리지 않도록 여백 */
@@ -216,16 +296,4 @@ input[type="date"]::-webkit-date-and-time-value {
     font-size: 13px;
     color: var(--text-sub);
     margin-bottom: 6px;
-}
-
-.hero-amount {
-    font-size: 40px;
-    font-weight: 800;
-    color: var(--text);
-}
-
-.hero-amount .unit {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-sub);
 }

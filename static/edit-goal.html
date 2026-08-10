@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <title>목표수정</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,29 +14,35 @@
             <button class="header-btn" onclick="history.back()">←</button>
         </div>
 
-        <!-- 타이틀 영역 -->
-        <div style="margin-top: 24px; margin-bottom: 36px;">
-            <h1 class="title-lg">목표를<br>수정할까요?</h1>
-            <p class="text-sub" style="margin-top: 12px;">목표를 정하면 저금통이 시작돼요</p>
-        </div>
+        <!-- 로딩 중: 데이터 오기 전까지 스피너만 (빈 폼 번쩍임 방지) -->
+        <div id="loading"><div class="spinner"></div></div>
 
-        <!-- 입력 폼 영역 (form 태그 대신 div: 버튼의 자동 submit 동작 방지) -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div>
-                <label class="field-label">목표 이름</label>
-                <input class="input" type="text" id="name" placeholder="">
+        <!-- 폼: 데이터 채운 뒤에 표시 -->
+        <div id="editForm" style="display: none;">
+            <!-- 타이틀 영역 -->
+            <div style="margin-top: 24px; margin-bottom: 36px;">
+                <h1 class="title-lg">목표를<br>수정할까요?</h1>
+                <p class="text-sub" style="margin-top: 12px;">목표를 정하면 저금통이 시작돼요</p>
             </div>
-            <div>
-                <label class="field-label">목표 금액</label>
-                <input class="input" type="text" id="targetAmount" placeholder="숫자만 입력" inputmode="numeric">
+
+            <!-- 입력 폼 영역 (form 태그 대신 div: 버튼의 자동 submit 동작 방지) -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label class="field-label">목표 이름</label>
+                    <input class="input" type="text" id="name" placeholder="">
+                </div>
+                <div>
+                    <label class="field-label">목표 금액</label>
+                    <input class="input" type="text" id="targetAmount" placeholder="숫자만 입력" inputmode="numeric">
+                </div>
+                <div>
+                    <label class="field-label">마감일</label>
+                    <input class="input" type="date" id="deadline">
+                </div>
+                <!-- 에러 문구 자리 (평소엔 비어 있고, JS가 상황별 문구를 채움) -->
+                <p class="error-msg" id="errorMsg"></p>
+                <button class="btn-primary" onclick="edit_goal()">목표 수정</button>
             </div>
-            <div>
-                <label class="field-label">마감일</label>
-                <input class="input" type="date" id="deadline">
-            </div>
-            <!-- 에러 문구 자리 (평소엔 비어 있고, JS가 상황별 문구를 채움) -->
-            <p class="error-msg" id="errorMsg"></p>
-            <button class="btn-primary" onclick="edit_goal()">목표 수정</button>
         </div>
     </div>
 
@@ -58,9 +66,13 @@
             document.getElementById("name").value = goal.name;
             document.getElementById("targetAmount").value = goal.target_amount.toLocaleString();
             document.getElementById("deadline").value = goal.deadline;
+
+            // 값을 다 채운 뒤에야 스피너를 감추고 폼을 보여줌
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("editForm").style.display = "block";
         }
         loadCurrentGoal();
-        
+
         let isEditingGoal = false;
 
         async function edit_goal() {
@@ -78,7 +90,7 @@
                     document.getElementById("errorMsg").textContent = "수정할 내용을 입력해주세요";
                     return;
                 }
-                
+
                 const body = {
                     name: nameInput || null,
                     target_amount: amountInput ? parseInt(amountInput) : null,

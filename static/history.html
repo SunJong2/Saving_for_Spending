@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <title>히스토리</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container has-tabbar">
         <div class="header">
-            <span style="font-weight: 700; font-size: 17px;">히스토리</span>
+            <span class="header-title">히스토리</span>
         </div>
         <!-- 히스토리가 있을 때 보여줄 영역 (기본 숨김) -->
         <div id="historySection" style="display: none;">
             <div style="margin-top: 24px; margin-bottom: 32px;">
                 <h1 class="title-lg">지금까지<br>해낸 것들 🏆</h1>
             </div>
-            <h2 style="font-size: 18px; margin: 0px 0 12px;">달성 기록</h2>
+            <h2 class="section-title">달성 기록</h2>
             <div id="historyList"></div>
         </div>
 
@@ -66,15 +68,15 @@
 
                 <div id="modalSavingsList"></div>
 
-                <div style="display: flex; gap: 8px; margin-top: 20px;">
+                <div class="btn-row" style="margin-top: 20px;">
                     <button class="btn-sub" onclick="closeDetail()">닫기</button>
-                    <button class="btn-sub" style="color: #F04452;" onclick="showGoalDeleteConfirm()">삭제</button>
+                    <button class="btn-sub text-danger" onclick="showGoalDeleteConfirm()">삭제</button>
                 </div>
             </div>
 
             <!-- 뷰 2: 삭제 확인 (기본 숨김) -->
             <div id="deleteConfirmView" style="display: none; text-align: center;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" 
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M10 11v6"/>
                     <path d="M14 11v6"/>
@@ -82,12 +84,10 @@
                     <path d="M3 6h18"/>
                     <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                 </svg>
-                <h2 style="font-size: 20px; margin: 16px 0 8px;">이 목표를 삭제할까요?</h2>
-                <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
-                    달성 기록이 사라져요
-                </p>
+                <h2 class="modal-title">이 목표를 삭제할까요?</h2>
+                <p class="modal-desc">달성 기록이 사라져요</p>
                 <button class="btn-danger" onclick="deleteCompletedGoal()">삭제하기</button>
-                <button class="btn-sub" style="width: 100%; margin-top: 8px;" onclick="hideGoalDeleteConfirm()">
+                <button class="btn-sub btn-block" style="margin-top: 8px;" onclick="hideGoalDeleteConfirm()">
                     취소
                 </button>
             </div>
@@ -121,17 +121,15 @@
                 return;
             }
             document.getElementById("historySection").style.display = "block";
-            
+
             document.getElementById("historyList").innerHTML = historyData.history
                 .map(h => `
-                    <div onclick="openGoalDetail(${h.id}, '${h.name}')"
-                        style="background: var(--bg-section); border-radius: var(--radius);
-                                padding: 20px; margin-bottom: 12px;">
+                    <div onclick="openGoalDetail(${h.id}, '${h.name}')" class="history-item">
 
                         <!-- 1줄: 목표 이름 + 달성률 -->
                         <div style="display: flex; justify-content: space-between; align-items: baseline;">
                             <span style="font-size: 17px; font-weight: 700;">${h.name}</span>
-                            <span style="font-size: 14px; font-weight: 700; color: #7C4DFF;">${h.progress}%</span>
+                            <span style="font-size: 14px; font-weight: 700; color: var(--primary);">${h.progress}%</span>
                         </div>
 
                         <!-- 2줄: 금액 -->
@@ -148,10 +146,10 @@
                                 : "끝까지 해냈어요"}
                         </p>
                     </div>
-                    
+
                 `)
-                .join("");        
-            
+                .join("");
+
         }
         let selectedGoalId = null;  // 어느 목표를 삭제할지 기억
 

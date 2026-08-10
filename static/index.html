@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <title>홈</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,7 +13,7 @@
 <body>
     <div class="container has-tabbar">
         <div class="header">
-            <span style="font-weight: 700; font-size: 17px;">저금통</span>
+            <span class="header-title">저금통</span>
             <button class="header-btn-text" onclick="logout()">로그아웃</button>
         </div>
 
@@ -21,28 +23,25 @@
             <h1 class="title-lg" id="goalName"></h1>
             <div id="overdueBanner" style="display: none; background: #FFF5F5;
                 border-radius: 12px; padding: 14px 16px; margin: 12px 0;">
-                <p style="font-size: 14px; color: #F04452; font-weight: 600;">마감일이 지났어요</p>
+                <p style="font-size: 14px; color: var(--danger); font-weight: 600;">마감일이 지났어요</p>
                 <p class="text-sub" style="font-size: 13px; margin-top: 4px;">
                     조금 더 시간이 필요하면 마감일을 늘려보세요
                 </p>
-                <button class="btn-sub" style="width: 100%; margin-top: 12px;"
+                <button class="btn-sub btn-block" style="margin-top: 12px;"
                         onclick="location.href='edit-goal.html'">
                     마감일 연장하기
                 </button>
             </div>
 
-            <!-- 저금통 자리 -->
-            <div style="background: var(--bg-section); border-radius: var(--radius);
-                        padding: 40px 24px; text-align: center; margin: 24px 0;">
-
+            <!-- 저금통 (홈 히어로) -->
+            <div class="savings-box">
                 <p class="text-sub" style="margin-bottom: 4px;">지금까지 모았어요</p>
                 <h2 id="currentAmount" class="hero-amount"></h2>
-                <p id="targetAmount" class="text-sub" style="color: #4E5968;" ></p>
+                <p id="targetAmount" class="hero-target"></p>
                 <!-- 진행률 바 -->
                 <div class="progress-track">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
-
                 <p id="progressText" class="text-sub" style="margin-top: 8px;"></p>
             </div>
 
@@ -51,12 +50,12 @@
             </button>
 
             <!-- 보조 버튼 두 개 -->
-            <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <div class="btn-row" style="margin-top: 10px;">
                 <button class="btn-sub" onclick="location.href='edit-goal.html'">목표 수정</button>
                 <button class="btn-sub" onclick="openDeleteModal()">목표 삭제</button>
             </div>
 
-            <h2 style="font-size: 18px; margin: 32px 0 12px;">최근 기록</h2>
+            <h2 class="section-title" style="margin-top: 32px;">최근 기록</h2>
             <div id="savingsList"></div>
         </div>
 
@@ -97,20 +96,18 @@
 
     <div class="modal-overlay" id="deleteModal">
         <div class="modal-card">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" 
+            <svg class="modal-icon" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 11v6"/>
-                    <path d="M14 11v6"/>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-                    <path d="M3 6h18"/>
-                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
-            <h2 style="font-size: 20px; margin: 16px 0 8px;">목표를 삭제할까요?</h2>
-            <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
-                지금까지 기록한 절약 내역도 함께 사라져요
-            </p>
+                <path d="M10 11v6"/>
+                <path d="M14 11v6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                <path d="M3 6h18"/>
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <h2 class="modal-title">목표를 삭제할까요?</h2>
+            <p class="modal-desc">지금까지 기록한 절약 내역도 함께 사라져요</p>
             <button class="btn-danger" onclick="deleteGoal()">삭제하기</button>
-            <button class="btn-sub" style="width: 100%; margin-top: 8px;" onclick="closeDeleteModal()">
+            <button class="btn-sub btn-block" style="margin-top: 8px;" onclick="closeDeleteModal()">
                 취소
             </button>
         </div>
@@ -122,22 +119,22 @@
             <div id="savingDetailView">
                 <p class="text-sub" style="font-size: 13px;" id="savingDate"></p>
                 <h2 style="font-size: 24px; margin: 8px 0 12px;" id="savingCategory"></h2>
-                <p style="font-size: 32px; font-weight: 700; color: #7C4DFF; margin-bottom: 4px;" id="savingAmount"></p>
+                <p style="font-size: 26px; font-weight: 700; color: var(--primary); margin-bottom: 4px;" id="savingAmount"></p>
 
                 <div id="savingMemoBox" style="display: none; background: var(--bg-section);
                         border-radius: 14px; padding: 16px; margin-top: 20px;">
                     <p style="font-size: 14px; line-height: 1.6; color: var(--text-sub);" id="savingMemo"></p>
                 </div>
 
-                <div style="display: flex; gap: 8px; margin-top: 32px;">
+                <div class="btn-row" style="margin-top: 32px;">
                     <button class="btn-sub" onclick="closeSavingModal()">닫기</button>
-                    <button class="btn-sub" style="color: #F04452;" onclick="showDeleteConfirm()">삭제</button>
+                    <button class="btn-sub text-danger" onclick="showDeleteConfirm()">삭제</button>
                 </div>
             </div>
 
             <!-- 삭제 확인 화면 (기본 숨김) -->
             <div id="savingDeleteView" style="display: none; text-align: center;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" 
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M10 11v6"/>
                     <path d="M14 11v6"/>
@@ -145,12 +142,10 @@
                     <path d="M3 6h18"/>
                     <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                 </svg>
-                <h2 style="font-size: 20px; margin: 16px 0 8px;">이 기록을 삭제할까요?</h2>
-                <p class="text-sub" style="margin-bottom: 28px; font-size: 14px;">
-                    삭제하면 되돌릴 수 없어요
-                </p>
+                <h2 class="modal-title">이 기록을 삭제할까요?</h2>
+                <p class="modal-desc">삭제하면 되돌릴 수 없어요</p>
                 <button class="btn-danger" onclick="deleteSaving()">삭제하기</button>
-                <button class="btn-sub" style="width: 100%; margin-top: 8px;" onclick="hideDeleteConfirm()">
+                <button class="btn-sub btn-block" style="margin-top: 8px;" onclick="hideDeleteConfirm()">
                     취소
                 </button>
             </div>
@@ -204,15 +199,15 @@
                 ddayEl.style.color = "";                    // 기본 색
             } else if (goal.d_day === 0) {
                 ddayEl.textContent = "오늘이 마감일이에요";
-                ddayEl.style.color = "#F04452";
+                ddayEl.style.color = "var(--danger)";
             } else {
                 ddayEl.textContent = `마감 ${Math.abs(goal.d_day)}일 지남`;
-                ddayEl.style.color = "#F04452";
+                ddayEl.style.color = "var(--danger)";
             }
             document.getElementById("goalName").textContent = goal.name;
             document.getElementById("currentAmount").innerHTML =
                 goal.current_amount.toLocaleString() + '<span class="unit">원</span>';
-            document.getElementById("targetAmount").textContent = 
+            document.getElementById("targetAmount").textContent =
                 "목표 " + goal.target_amount.toLocaleString() + "원";
             const remaining = goal.target_amount - goal.current_amount;
             document.getElementById("progressText").textContent =
@@ -240,10 +235,7 @@
 
             document.getElementById("savingsList").innerHTML = data.savings
                 .map(s => `
-                    <div onclick='openSavingDetail(${JSON.stringify(s)})'
-                        style="background: var(--bg-section); border-radius: 12px;
-                                padding: 14px 16px; margin-bottom: 8px;
-                                display: flex; justify-content: space-between;">
+                    <div onclick='openSavingDetail(${JSON.stringify(s)})' class="list-item">
                         <span>${s.category}</span>
                         <span style="font-weight: 600;">+${s.amount.toLocaleString()}원</span>
                     </div>
@@ -345,7 +337,7 @@
             document.getElementById("savingDeleteView").style.display = "none";
             document.getElementById("savingDetailView").style.display = "block";
         }
-        
+
         function logout() {
             localStorage.removeItem("token");
             location.href = "login.html";
