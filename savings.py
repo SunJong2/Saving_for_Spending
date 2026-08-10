@@ -135,5 +135,24 @@ def delete_saving(saving_id: int, user_id: int = Depends(get_current_user)):
 
     return {"message": "saving deleted"}
 
+@router.get("/savings/stats")
+def get_savings_stats(user_id: int = Depends(get_current_user)):
+    with get_db() as conn:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """SELECT category, SUM(amount) AS total FROM savings 
+                WHERE user_id = %s GROUP BY category ORDER BY total DESC""",
+                (user_id,)
+        )
+
+        stats = cursor.fetchall()
+
+        return {"stats": [
+            {"category": stat[0], "total": stat[1]}
+            for stat in stats
+        ]}
+
+
 
 

@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <title>히스토리</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -18,7 +16,14 @@
             <div style="margin-top: 24px; margin-bottom: 32px;">
                 <h1 class="title-lg">지금까지<br>해낸 것들 🏆</h1>
             </div>
-            <h2 class="section-title">달성 기록</h2>
+
+            <!-- 카테고리별 절약 통계 (기록 없으면 JS가 숨김) -->
+            <div id="statsBlock">
+                <h2 class="section-title">카테고리별로 아낀 돈</h2>
+                <div id="statsList"></div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 32px;">달성 기록</h2>
             <div id="historyList"></div>
         </div>
 
@@ -121,6 +126,7 @@
                 return;
             }
             document.getElementById("historySection").style.display = "block";
+            loadStats();   // 히스토리 있으면 통계도 채움
 
             document.getElementById("historyList").innerHTML = historyData.history
                 .map(h => `
@@ -151,6 +157,48 @@
                 .join("");
 
         }
+
+        // 카테고리별 절약 통계 — GROUP BY 결과를 막대로
+        async function loadStats() {
+            const res = await fetch("/savings/stats", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (res.status === 401) {
+                localStorage.removeItem("token");
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            const data = await res.json();
+
+            // 기록이 하나도 없으면 통계 블록 자체를 숨김
+            if (data.stats.length === 0) {
+                document.getElementById("statsBlock").style.display = "none";
+                return;
+            }
+
+            // 가장 많이 아낀 카테고리를 기준(100%)으로 나머지 막대 비율 계산
+            const max = Math.max(...data.stats.map(s => s.total));
+
+            document.getElementById("statsList").innerHTML = data.stats
+                .map(s => {
+                    const pct = Math.round(s.total / max * 100);
+                    return `
+                        <div class="stat-row">
+                            <div class="stat-row-top">
+                                <span>${s.category}</span>
+                                <span style="font-weight: 600;">${s.total.toLocaleString()}원</span>
+                            </div>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                })
+                .join("");
+        }
+
         let selectedGoalId = null;  // 어느 목표를 삭제할지 기억
 
         async function openGoalDetail(goalId, goalName) {
