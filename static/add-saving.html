@@ -27,13 +27,13 @@
         </div>
 
         <!-- 타이틀 영역 -->
-        <div style="margin-top: 24px; margin-bottom: 36px;">
+        <div class="page-intro">
             <h1 class="title-lg">얼마를<br>아꼈나요?</h1>
             <p class="text-sub" style="margin-top: 12px;">참은 만큼 목표에 가까워져요</p>
         </div>
 
         <!-- 입력 폼 영역 (form 태그 대신 div: 버튼의 자동 submit 동작 방지) -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="form-col">
             <input class="input" type="text" id="category" placeholder="무엇을 아꼈나요? (예: 배달음식)">
             <input class="input" type="text" id="amount" placeholder="금액" inputmode="numeric">
             <input class="input" type="text" id="memo" placeholder="메모 (선택)">
@@ -48,7 +48,7 @@
         <div class="modal-card">
             <div style="font-size: 64px;">🎉</div>
             <h1 class="title-lg" style="margin: 16px 0 8px;">목표 달성!</h1>
-            <p style="font-size: 20px; font-weight: 700; color: #7C4DFF; margin-bottom: 8px;"
+            <p style="font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 8px;"
                 id="congratsProgress"></p>
             <p class="text-sub" style="margin-bottom: 28px;" id="congratsMessage"></p>
             <button class="btn-primary" onclick="location.href='index.html'">홈으로</button>
@@ -78,7 +78,7 @@
         async function add_saving() {
             if (isAddingSaving) return;   // 이미 처리 중이면 두 번째 클릭부터 무시
             isAddingSaving = true;
-            
+
             try {
                 // 입력창에서 현재 값 읽기
                 const category = document.getElementById("category").value;
@@ -94,7 +94,7 @@
                     document.getElementById("errorMsg").textContent = "올바른 형식의 금액을 입력헤주세요";
                     return;
                 }
-                
+
                 const response = await fetch("/savings", {
                     method: "POST",
                     headers: {
@@ -116,7 +116,7 @@
                         document.getElementById("congratsProgress").textContent = data.progress + "% 달성";
 
                         // 초과 달성이면 다른 문구
-                        document.getElementById("congratsMessage").textContent = 
+                        document.getElementById("congratsMessage").textContent =
                             data.progress > 100
                                 ? "목표를 넘어섰어요! 갖고 싶던 걸 가져보세요 🎁"
                                 : "해냈어요. 갖고 싶던 걸 가져보세요 🎁";

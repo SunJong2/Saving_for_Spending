@@ -120,6 +120,15 @@ input[type="date"]::-webkit-date-and-time-value {
     min-height: 20px;
 }
 
+/* ===== 폼 페이지 공통 ===== */
+/* 제목+부제 인트로 블록 */
+.page-intro { margin: 24px 0 36px; }
+.page-intro-auth { margin: 80px 0 48px; }   /* 로그인·가입: 히어로처럼 큰 여백 */
+/* 입력칸 세로 배치 */
+.form-col { display: flex; flex-direction: column; gap: 12px; }
+/* 로그인·가입 하단 "가입하기 / 로그인" 안내 */
+.auth-footer { text-align: center; margin-top: 24px; }
+
 /* ===== 로딩 스피너 ===== */
 .spinner {
     width: 28px;

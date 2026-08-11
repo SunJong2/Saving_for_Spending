@@ -25,13 +25,13 @@
 <body>
     <div class="container">
         <!-- 타이틀 영역 -->
-        <div style="margin-top: 80px; margin-bottom: 48px;">
+        <div class="page-intro-auth">
             <h1 class="title-lg">모으는 재미,<br>쓰는 기쁨 💸</h1>
             <p class="text-sub" style="margin-top: 12px;">갖고 싶은 것을 향해 아껴보세요</p>
         </div>
 
         <!-- 입력 폼 영역 (form 태그 대신 div: 버튼의 자동 submit 동작 방지) -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="form-col">
             <input class="input" type="email" id="email" placeholder="이메일">
             <input class="input" type="password" id="password" placeholder="비밀번호">
             <!-- 에러 문구 자리 (평소엔 비어 있고, JS가 상황별 문구를 채움) -->
@@ -39,7 +39,7 @@
             <button class="btn-primary" onclick="login()">로그인</button>
         </div>
 
-        <p class="text-sub" style="text-align: center; margin-top: 24px;">
+        <p class="text-sub auth-footer">
             아직 계정이 없나요? <a class="link" href="signup.html">가입하기</a>
         </p>
     </div>
@@ -96,7 +96,7 @@
         if (localStorage.getItem("token")) {
             location.href = "index.html";
         }
-        
+
     </script>
 </body>
 </html>
