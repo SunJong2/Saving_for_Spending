@@ -1,0 +1,17 @@
+{
+  "name": "모아사 — 모아서 사는 재미",
+  "short_name": "모아사",
+  "description": "참은 소비를 저축으로. 단기 목표를 위한 절약 앱.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#7C4DFF",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}
