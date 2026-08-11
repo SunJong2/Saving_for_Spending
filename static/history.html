@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>히스토리</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 파비콘 -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <!-- PWA -->
@@ -12,12 +15,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="모아사">
     <script>
-    if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
-    }
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+        }
     </script>
-    <title>히스토리</title>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container has-tabbar">
@@ -43,9 +44,9 @@
         <!-- 히스토리가 없을 때 보여줄 영역 (기본 숨김) -->
         <div id="noHistorySection" style="display: none; text-align: center; margin-top: 90px;">
             <div style="font-size: 64px;">🎯</div>
-            <h1 class="title-lg" style="margin-top: 16px;" id="noGoalTitle">아직 달성한 목표가 없어요</h1>
-            <p class="text-sub" style="margin: 12px 0 32px;" id="noGoalSub">목표를 세우고 아껴서 가져보세요</p>
-            <button class="btn-primary" onclick="location.href='add-goal.html'" id="noGoalBtn">
+            <h1 class="title-lg" style="margin-top: 16px;" id="noHistoryTitle">아직 달성한 목표가 없어요</h1>
+            <p class="text-sub" style="margin: 12px 0 32px;" id="noHistorySub">목표를 세우고 아껴서 가져보세요</p>
+            <button class="btn-primary" id="noHistoryBtn" onclick="location.href='add-goal.html'">
                 첫 목표 만들기
             </button>
         </div>
@@ -135,7 +136,8 @@
 
             const historyData = await historyRes.json();
             if (historyData.history.length === 0) {
-                document.getElementById("noHistorySection").style.display = "block";
+                // 완료한 목표 없음 → 진행 중 목표가 있는지에 따라 빈 화면 문구/버튼을 다르게
+                await showEmptyHistory();
                 return;
             }
             document.getElementById("historySection").style.display = "block";
@@ -169,6 +171,33 @@
                 `)
                 .join("");
 
+        }
+
+        // 완료 목표가 없을 때의 빈 화면.
+        // 진행 중 목표가 "있으면" → 홈에서 이어가라고 안내 (첫 목표 만들기는 틀린 문구)
+        // 진행 중 목표가 "없으면" → 진짜 신규 → 첫 목표 만들기 그대로
+        async function showEmptyHistory() {
+            const currentRes = await fetch("/goals/current", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (currentRes.status === 401) {
+                localStorage.removeItem("token");
+                location.href = "login.html?expired=1";
+                return;
+            }
+
+            if (currentRes.ok) {
+                // 진행 중 목표 있음 → 문구·버튼 교체
+                document.getElementById("noHistorySub").textContent =
+                    "진행 중인 목표를 끝까지 채우면 여기에 쌓여요";
+                const btn = document.getElementById("noHistoryBtn");
+                btn.textContent = "홈에서 이어가기";
+                btn.onclick = () => location.href = "index.html";
+            }
+            // 404(진행 중 목표 없음)면 기본 문구/버튼(첫 목표 만들기 → add-goal) 그대로 둠
+
+            document.getElementById("noHistorySection").style.display = "block";
         }
 
         // 카테고리별 절약 통계 — GROUP BY 결과를 막대로
