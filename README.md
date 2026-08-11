@@ -168,7 +168,7 @@ Render 서버는 UTC라 `datetime.now()`가 한국보다 9시간 느렸습니다
 
 ```bash
 # 1. 클론 & 가상환경
-git clone https://github.com/SunJong2/Saving_for_Spending.git && cd moasa
+git clone https://github.com/SunJong2/Moasa.git && cd moasa
 python3 -m venv venv && source venv/bin/activate
 
 # 2. 의존성
